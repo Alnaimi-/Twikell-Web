@@ -59,36 +59,39 @@ main = do
         middleware $ basicAuth (verifyCredentials pool)         -- check if the user is authenticated for protected resources
                        "Haskell Blog Realm" { authIsProtected = protectedResources } -- function which restricts access to some routes only for authenticated users
 
+        {- Following is concerned with handling Tweets -}
+
         -- LIST
-        get   "/articles" $ do articles <- liftIO $ listArticles pool  -- get the ist of articles for DB
-                               articlesList articles                   -- show articles list
+        get    "/tweets" $ do tweets <- liftIO $ listTweets pool               -- get the ist of tweets for DB
+                              listedTweets tweets                              -- show tweet list
+        
         -- VIEW
-        get   "/articles/:id" $ do id <- param "id" :: ActionM TL.Text -- get the article id from the request
-                                   maybeArticle <- liftIO $ findArticle pool id -- get the article from the DB
-                                   viewArticle maybeArticle            -- show the article if it was found
+        get    "/tweets/:id" $ do id <- param "id" :: ActionM TL.Text          -- get the article id from the request
+                                  maybeArticle <- liftIO $ findArticle pool id -- get the article from the DB
+                                  viewArticle maybeArticle                     -- show the article if it was found
 
         -- CREATE
-        post  "/admin/articles" $ do article <- getArticleParam -- read the request body, try to parse it into article
-                                     insertArticle pool article -- insert the parsed article into the DB
-                                     createdArticle article     -- show info that the article was created
-
-        -- UPDATE
-        put   "/admin/articles" $ do article <- getArticleParam -- read the request body, try to parse it into article
-                                     updateArticle pool article -- update parsed article in the DB
-                                     updatedArticle article     -- show info that the article was updated
+        post   "/admin/tweet" $ do name <- param "name" :: ActionM TL.Text     -- read the screen_name
+                                   tweets <- liftIO $ timeline "katyperry"     -- Retrieve tweets for said screen name
+                                   insertTweets pool tweets                    -- insert parsed tweets into the DB
+                                   insertedTweets tweets                       -- show info that the tweet was added
 
         -- DELETE
-        delete "/admin/articles/:id" $ do id <- param "id" :: ActionM TL.Text -- get the article id
-                                          deleteArticle pool id  -- delete the article from the DB
-                                          deletedArticle id      -- show info that the article was deleted
+        delete "/admin/tweet/:id" $ do id <- param "id" :: ActionM TL.Text     -- get the tweet id
+                                       deleteTweet pool id                     -- delete the tweet from the DB
+                                       deletedTweet id                         -- show info that the tweet was deleted
 
-        -- CREATE
-        post   "/admin/tweet" $ do name <- param "name" :: ActionM TL.Text    -- read the screen_name
-                                   tweets <- liftIO $ timeline "katyperry" -- Retrieve tweets for said screen name
-                                   insertTweets pool tweets                -- insert parsed tweets into the DB
-                                   insertedTweets tweets                   -- show info that the tweet was added
+        {- Following is concerned with handling Users -}
+        -- VIEW
+        get    "/user/:name" $ do name <- param "name" :: ActionM TL.Text      -- get the screen_name from the request
+                                  maybeUser <- liftIO $ findUser pool name     -- get the user from the DB
+                                  viewUser maybeUser                           -- show the user if it was found
+        -- UPDATE
+        put    "/admin/user" $ do tweet <- getArticleParam                     -- read the request body, try to parse it into article
+                                  updateUser pool tweet                        -- update parsed article in the DB
+                                  updatedUser tweet                            -- show info that the article was updated
 
------------------------------------------------
+----------------------------------------------
 
 -- Parse the request body into the Article
 getArticleParam :: ActionT TL.Text IO (Maybe Article)
