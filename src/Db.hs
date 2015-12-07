@@ -8,6 +8,7 @@ import JSON
 import Web.Scotty.Internal.Types (ActionT)
 import GHC.Generics (Generic)
 import Control.Monad.IO.Class
+import Data.Maybe
 import qualified Database.MySQL.Base as M
 import Database.MySQL.Simple
 import Database.MySQL.Simple.Types
@@ -22,9 +23,9 @@ import GHC.Int
 
 -- DbConfig contains info needed to connect to MySQL server
 data DbConfig = DbConfig {
-    dbName :: String,
-    dbUser :: String,
-    dbPassword :: String
+  dbName     :: String,
+  dbUser     :: String,
+  dbPassword :: String
 } deriving (Show, Generic)
 
 -- The function knows how to create new DB connection
@@ -85,37 +86,22 @@ findUserByLogin pool login = do
 
 --------------------------------------------------------------------------------
 
-listArticles :: Pool Connection -> IO [Article]
-listArticles pool = do
-  res <- fetchSimple pool "SELECT * FROM article ORDER BY id DESC" :: IO [(Integer, TL.Text, TL.Text)]
-  return $ map (\(id, title, bodyText) -> Article id title bodyText) res
-   
+{- Following are methods are concerned with the tweet table -}
+
+listTweets :: Pool Connection -> IO [Tweet]
+listTweets pool = do
+  res <- fetchSimple pool "SELECT * FROM tweet ORDER BY id DESC" :: IO [(Integer, TL.Text, Integer, TL.Text, TL.Text)]
+
+  return $ map (\(tweetId, text, reCount, tags, user) -> Tweet tweetId text reCount (getTags tags) (getUser user)) res
+  where getTags tags = map (\tag -> Tag tag) $ TL.splitOn (TL.pack ",") tags
+        getUser user = User user "test" "test" "test" 35
+
 findArticle :: Pool Connection -> TL.Text -> IO (Maybe Article)
 findArticle pool id = do
   res <- fetch pool (Only id) "SELECT * FROM article WHERE id=?" :: IO [(Integer, TL.Text, TL.Text)]
   return $ oneArticle res
   where oneArticle ((id, title, bodyText) : _) = Just $ Article id title bodyText
         oneArticle _ = Nothing
-
-
-insertArticle :: Pool Connection -> Maybe Article -> ActionT TL.Text IO ()
-insertArticle pool Nothing = return ()
-insertArticle pool (Just (Article id title bodyText)) = do
-  liftIO $ execSqlT pool [title, bodyText]
-                         "INSERT INTO article(title, bodyText) VALUES(?,?)"
-  return ()
-
-updateArticle :: Pool Connection -> Maybe Article -> ActionT TL.Text IO ()
-updateArticle pool Nothing = return ()
-updateArticle pool (Just (Article id title bodyText)) = do
-  liftIO $ execSqlT pool [title, bodyText, (TL.decodeUtf8 $ BL.pack $ show id)]
-                         "UPDATE article SET title=?, bodyText=? WHERE id=?"
-  return ()
-
-deleteArticle :: Pool Connection -> TL.Text -> ActionT TL.Text IO ()
-deleteArticle pool id = do
-  liftIO $ execSqlT pool [id] "DELETE FROM article WHERE id=?"
-  return ()
 
 insertTweets :: Pool Connection -> Maybe [Tweet] -> ActionT TL.Text IO ()
 insertTweets pool Nothing = return ()
@@ -127,4 +113,26 @@ insertTweet :: Pool Connection -> Tweet -> ActionT TL.Text IO ()
 insertTweet pool tweet = do
   liftIO $ execSqlT pool [(TL.pack $ show $ tweetId tweet), text tweet, (TL.pack $ show $ reCount tweet)]
                          "INSERT IGNORE INTO tweet(id, text, retweet_count) VALUES(?,?,?)"
-  return ()                           
+  return ()
+
+deleteTweet :: Pool Connection -> TL.Text -> ActionT TL.Text IO ()
+deleteTweet pool id = do
+  liftIO $ execSqlT pool [id] "DELETE FROM tweet WHERE id=?"
+  return ()                      
+
+{- Following are methods are concerned with the user table -}
+
+updateUser :: Pool Connection -> Maybe Article -> ActionT TL.Text IO ()
+updateUser pool Nothing = return ()
+updateUser pool (Just (Article id title bodyText)) = do
+  liftIO $ execSqlT pool [title, bodyText, (TL.decodeUtf8 $ BL.pack $ show id)]
+                         "UPDATE tweet SET text=?, retweet_count=? WHERE id=?"
+  return ()
+
+findUser :: Pool Connection -> TL.Text -> IO (Maybe User)
+findUser pool name = do
+  res <- fetch pool (Only name) "SELECT * FROM twitter_user WHERE screen_name=?" :: IO [(TL.Text, TL.Text, TL.Text, TL.Text, Integer)]
+
+  return $ oneUser res
+  where oneUser ((scrn, name, img, loc, followerC) : _) = Just $ User scrn name img loc followerC
+        oneUser _ = Nothing
