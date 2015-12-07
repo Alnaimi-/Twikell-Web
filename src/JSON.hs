@@ -27,6 +27,15 @@ instance FromJSON Tweet where
           <*> ((v .: "entities") >>= (.: "hashtags")) -- ^ Parsing hashtag is given by entities.
           <*> v .: "user"                             --   Each tag is then extracted acc to Tag.
 
+-- | Specify the parsing of Tweet object to JSON
+instance ToJSON Tweet where
+     toJSON (Tweet tweetId text reCount hashtags user) =
+         object ["id"            .= tweetId,
+                 "text"          .= text,
+                 "retweet_count" .= reCount,
+                 "hashtags"      .= hashtags,
+                 "user"          .= user]
+
 -- | The User type, given by above retreived Tweets.
 data User = User {
   screenName    :: TL.Text,
@@ -44,6 +53,15 @@ instance FromJSON User where
          <*> v .: "location"
          <*> v .: "followers_count"
 
+-- | Specify the parsing of User object to JSON
+instance ToJSON User where
+     toJSON (User screenName name image location followerCount) =
+         object ["screen_name"    .= screenName,
+                 "name"           .= name,
+                 "image"          .= image,
+                 "location"       .= location,
+                 "follower_count" .= followerCount]
+
 -- | Type constructor for Users, representing a 
 --   [User]. This is because the follower request
 --   for twitter returns a "Users":[{},{}] JSON.
@@ -60,3 +78,8 @@ data Tag = Tag TL.Text deriving (Show, Generic)
 instance FromJSON Tag where
   parseJSON (Object v) = 
     Tag <$> v .: "text"
+
+-- | Specify the parsing of Tag object to JSON
+instance ToJSON Tag where
+     toJSON (Tag tag) =
+         object ["tag" .= tag]
