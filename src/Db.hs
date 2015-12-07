@@ -30,11 +30,11 @@ data DbConfig = DbConfig {
 -- The function knows how to create new DB connection
 -- It is needed to use with resource pool
 newConn :: DbConfig -> IO Connection
-newConn conf = connect defaultConnectInfo
-                       { connectUser = dbUser conf
-                       , connectPassword = dbPassword conf
-                       , connectDatabase = dbName conf
-                       }
+newConn conf = connect defaultConnectInfo { 
+  connectUser     = dbUser conf,
+  connectPassword = dbPassword conf,
+  connectDatabase = dbName conf
+}
 
 --------------------------------------------------------------------------------
 -- Utilities for interacting with the DB.
@@ -43,17 +43,17 @@ newConn conf = connect defaultConnectInfo
 -- Accepts arguments
 fetch :: (QueryResults r, QueryParams q) => Pool M.Connection -> q -> Query -> IO [r]
 fetch pool args sql = withResource pool retrieve
-      where retrieve conn = query conn sql args
+  where retrieve conn = query conn sql args
 
 -- No arguments -- just pure sql
 fetchSimple :: QueryResults r => Pool M.Connection -> Query -> IO [r]
 fetchSimple pool sql = withResource pool retrieve
-       where retrieve conn = query_ conn sql
+  where retrieve conn = query_ conn sql
 
 -- Update database
 execSql :: QueryParams q => Pool M.Connection -> q -> Query -> IO Int64
 execSql pool args sql = withResource pool ins
-       where ins conn = execute conn sql args
+  where ins conn = execute conn sql args
 
 -------------------------------------------------------------------------------
 -- Utilities for interacting with the DB.
@@ -62,69 +62,69 @@ execSql pool args sql = withResource pool ins
 -- Accepts arguments
 fetchT :: (QueryResults r, QueryParams q) => Pool M.Connection -> q -> Query -> IO [r]
 fetchT pool args sql = withResource pool retrieve
-      where retrieve conn = withTransaction conn $ query conn sql args
+  where retrieve conn = withTransaction conn $ query conn sql args
 
 -- No arguments -- just pure sql
 fetchSimpleT :: QueryResults r => Pool M.Connection -> Query -> IO [r]
 fetchSimpleT pool sql = withResource pool retrieve
-       where retrieve conn = withTransaction conn $ query_ conn sql
+  where retrieve conn = withTransaction conn $ query_ conn sql
 
 -- Update database
 execSqlT :: QueryParams q => Pool M.Connection -> q -> Query -> IO Int64
 execSqlT pool args sql = withResource pool ins
-       where ins conn = withTransaction conn $ execute conn sql args
+  where ins conn = withTransaction conn $ execute conn sql args
 
 --------------------------------------------------------------------------------
 
 findUserByLogin :: Pool Connection -> String -> IO (Maybe String)
 findUserByLogin pool login = do
-         res <- liftIO $ fetch pool (Only login) "SELECT * FROM user WHERE login=?" :: IO [(Integer, String, String)]
-         return $ password res
-         where password [(_, _, pwd)] = Just pwd
-               password _ = Nothing
+  res <- liftIO $ fetch pool (Only login) "SELECT * FROM user WHERE login=?" :: IO [(Integer, String, String)]
+  return $ password res
+  where password [(_, _, pwd)] = Just pwd
+        password _ = Nothing
 
 --------------------------------------------------------------------------------
 
 listArticles :: Pool Connection -> IO [Article]
 listArticles pool = do
-     res <- fetchSimple pool "SELECT * FROM article ORDER BY id DESC" :: IO [(Integer, TL.Text, TL.Text)]
-     return $ map (\(id, title, bodyText) -> Article id title bodyText) res
+  res <- fetchSimple pool "SELECT * FROM article ORDER BY id DESC" :: IO [(Integer, TL.Text, TL.Text)]
+  return $ map (\(id, title, bodyText) -> Article id title bodyText) res
    
 findArticle :: Pool Connection -> TL.Text -> IO (Maybe Article)
 findArticle pool id = do
-     res <- fetch pool (Only id) "SELECT * FROM article WHERE id=?" :: IO [(Integer, TL.Text, TL.Text)]
-     return $ oneArticle res
-     where oneArticle ((id, title, bodyText) : _) = Just $ Article id title bodyText
-           oneArticle _ = Nothing
+  res <- fetch pool (Only id) "SELECT * FROM article WHERE id=?" :: IO [(Integer, TL.Text, TL.Text)]
+  return $ oneArticle res
+  where oneArticle ((id, title, bodyText) : _) = Just $ Article id title bodyText
+        oneArticle _ = Nothing
 
 
 insertArticle :: Pool Connection -> Maybe Article -> ActionT TL.Text IO ()
 insertArticle pool Nothing = return ()
 insertArticle pool (Just (Article id title bodyText)) = do
-     liftIO $ execSqlT pool [title, bodyText]
-                            "INSERT INTO article(title, bodyText) VALUES(?,?)"
-     return ()
+  liftIO $ execSqlT pool [title, bodyText]
+                         "INSERT INTO article(title, bodyText) VALUES(?,?)"
+  return ()
 
 updateArticle :: Pool Connection -> Maybe Article -> ActionT TL.Text IO ()
 updateArticle pool Nothing = return ()
 updateArticle pool (Just (Article id title bodyText)) = do
-     liftIO $ execSqlT pool [title, bodyText, (TL.decodeUtf8 $ BL.pack $ show id)]
-                            "UPDATE article SET title=?, bodyText=? WHERE id=?"
-     return ()
+  liftIO $ execSqlT pool [title, bodyText, (TL.decodeUtf8 $ BL.pack $ show id)]
+                         "UPDATE article SET title=?, bodyText=? WHERE id=?"
+  return ()
 
 deleteArticle :: Pool Connection -> TL.Text -> ActionT TL.Text IO ()
 deleteArticle pool id = do
-     liftIO $ execSqlT pool [id] "DELETE FROM article WHERE id=?"
-     return ()
+  liftIO $ execSqlT pool [id] "DELETE FROM article WHERE id=?"
+  return ()
 
 insertTweets :: Pool Connection -> Maybe [Tweet] -> ActionT TL.Text IO ()
 insertTweets pool Nothing = return ()
 insertTweets pool (Just tweets) = do
-    a <- mapM_ (insertTweet pool) tweets
-    return ()
+  a <- mapM_ (insertTweet pool) tweets
+  return ()
 
 insertTweet :: Pool Connection -> Tweet -> ActionT TL.Text IO ()
 insertTweet pool tweet = do
-    liftIO $ execSqlT pool [(TL.pack $ show $ tweetId tweet), text tweet, (TL.pack $ show $ reCount tweet)]
-                           "INSERT IGNORE INTO tweet(id, text, retweet_count) VALUES(?,?,?)"
-    return ()                           
+  liftIO $ execSqlT pool [(TL.pack $ show $ tweetId tweet), text tweet, (TL.pack $ show $ reCount tweet)]
+                         "INSERT IGNORE INTO tweet(id, text, retweet_count) VALUES(?,?,?)"
+  return ()                           

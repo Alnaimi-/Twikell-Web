@@ -38,56 +38,55 @@ makeDbConfig conf = do
 -- authenticated users
 protectedResources ::  Request -> IO Bool
 protectedResources request = do
-    let path = pathInfo request
-    return $ protect path
-    where protect (p : _) =  p == "admin"  -- all requests to /admin/* should be authenticated
-          protect _       =  False         -- other requests are allowed for anonymous users
+  let path = pathInfo request
+  return $ protect path
+  where protect (p : _) =  p == "admin"  -- all requests to /admin/* should be authenticated
+        protect _       =  False         -- other requests are allowed for anonymous users
 
 
 main :: IO ()
 main = do
-    loadedConf <- C.load [C.Required "application.conf"]
-    dbConf <- makeDbConfig loadedConf
+  loadedConf <- C.load [C.Required "application.conf"]
+  dbConf <- makeDbConfig loadedConf
     
-    case dbConf of
-      Nothing -> putStrLn "No database configuration found, terminating..."
-      Just conf -> do      
-          pool <- createPool (newConn conf) close 1 64 10
-          scotty 3000 $ do
-              middleware $ staticPolicy (noDots >-> addBase "static") -- serve static files
-              middleware $ logStdout                                  -- log all requests; for production use logStdout
-              middleware $ basicAuth (verifyCredentials pool)         -- check if the user is authenticated for protected resources
-                           "Haskell Blog Realm" { authIsProtected = protectedResources } -- function which restricts access to some routes only for authenticated users
+  case dbConf of
+    Nothing -> putStrLn "No database configuration found, terminating..."
+    Just conf -> do      
+      pool <- createPool (newConn conf) close 1 64 10
+      scotty 3000 $ do
+        middleware $ staticPolicy (noDots >-> addBase "static") -- serve static files
+        middleware $ logStdout                                  -- log all requests; for production use logStdout
+        middleware $ basicAuth (verifyCredentials pool)         -- check if the user is authenticated for protected resources
+                       "Haskell Blog Realm" { authIsProtected = protectedResources } -- function which restricts access to some routes only for authenticated users
 
-              -- LIST
-              get   "/articles" $ do articles <- liftIO $ listArticles pool  -- get the ist of articles for DB
-                                     articlesList articles                   -- show articles list
-              -- VIEW
-              get   "/articles/:id" $ do id <- param "id" :: ActionM TL.Text -- get the article id from the request
-                                         maybeArticle <- liftIO $ findArticle pool id -- get the article from the DB
-                                         viewArticle maybeArticle            -- show the article if it was found
+        -- LIST
+        get   "/articles" $ do articles <- liftIO $ listArticles pool  -- get the ist of articles for DB
+                               articlesList articles                   -- show articles list
+        -- VIEW
+        get   "/articles/:id" $ do id <- param "id" :: ActionM TL.Text -- get the article id from the request
+                                   maybeArticle <- liftIO $ findArticle pool id -- get the article from the DB
+                                   viewArticle maybeArticle            -- show the article if it was found
 
-              -- CREATE
-              post  "/admin/articles" $ do article <- getArticleParam -- read the request body, try to parse it into article
-                                           insertArticle pool article -- insert the parsed article into the DB
-                                           createdArticle article     -- show info that the article was created
+        -- CREATE
+        post  "/admin/articles" $ do article <- getArticleParam -- read the request body, try to parse it into article
+                                     insertArticle pool article -- insert the parsed article into the DB
+                                     createdArticle article     -- show info that the article was created
 
-              -- UPDATE
-              put   "/admin/articles" $ do article <- getArticleParam -- read the request body, try to parse it into article
-                                           updateArticle pool article -- update parsed article in the DB
-                                           updatedArticle article     -- show info that the article was updated
+        -- UPDATE
+        put   "/admin/articles" $ do article <- getArticleParam -- read the request body, try to parse it into article
+                                     updateArticle pool article -- update parsed article in the DB
+                                     updatedArticle article     -- show info that the article was updated
 
-              -- DELETE
-              delete "/admin/articles/:id" $ do id <- param "id" :: ActionM TL.Text -- get the article id
-                                                deleteArticle pool id  -- delete the article from the DB
-                                                deletedArticle id      -- show info that the article was deleted
+        -- DELETE
+        delete "/admin/articles/:id" $ do id <- param "id" :: ActionM TL.Text -- get the article id
+                                          deleteArticle pool id  -- delete the article from the DB
+                                          deletedArticle id      -- show info that the article was deleted
 
-              -- CREATE
-              post   "/admin/tweet" $ do name <- param "name" :: ActionM TL.Text    -- read the screen_name
-                                            tweets <- liftIO $ timeline "katyperry" -- Retrieve tweets for said screen name
-                                            insertTweets pool tweets                -- insert parsed tweets into the DB
-                                            insertedTweets tweets                   -- show info that the tweet was added
-
+        -- CREATE
+        post   "/admin/tweet" $ do name <- param "name" :: ActionM TL.Text    -- read the screen_name
+                                   tweets <- liftIO $ timeline "katyperry" -- Retrieve tweets for said screen name
+                                   insertTweets pool tweets                -- insert parsed tweets into the DB
+                                   insertedTweets tweets                   -- show info that the tweet was added
 
 -----------------------------------------------
 
