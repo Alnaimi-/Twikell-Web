@@ -1,0 +1,5 @@
+database {
+  name = "twikell"
+  user = "root"
+  password = "abc123"
+}
