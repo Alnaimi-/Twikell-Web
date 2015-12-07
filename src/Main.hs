@@ -19,6 +19,7 @@ import Control.Monad.IO.Class
 import qualified Data.Configurator as C
 import qualified Data.Configurator.Types as C
 import Database.MySQL.Simple
+import Data.Maybe
 import Data.Pool(Pool, createPool, withResource)
 import qualified Data.Text.Lazy as TL
 import Data.Aeson
@@ -81,11 +82,11 @@ main = do
                                                 deleteArticle pool id  -- delete the article from the DB
                                                 deletedArticle id      -- show info that the article was deleted
 
-                            -- LIST
-              post   "/admin/addtweet" $ do name <- param "name" :: ActionM TL.Text -- get the ist of articles for DB
-                                            tweets <- liftIO $ timeline "katyperry"
-                                            insertTweets pool tweets
-                                            insertedTweets tweets 
+              -- CREATE
+              post   "/admin/tweet" $ do name <- param "name" :: ActionM TL.Text    -- read the screen_name
+                                            tweets <- liftIO $ timeline "katyperry" -- Retrieve tweets for said screen name
+                                            insertTweets pool tweets                -- insert parsed tweets into the DB
+                                            insertedTweets tweets                   -- show info that the tweet was added
 
 
 -----------------------------------------------
