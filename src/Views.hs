@@ -31,4 +31,4 @@ deletedArticle :: TL.Text -> ActionM ()
 deletedArticle id = json ()
 
 insertedTweets :: Maybe [Tweet] -> ActionM ()
-insertedTweets tweets = json ()
+insertedTweets tweets = json tweets
