@@ -2,7 +2,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 module Db where
-import Domain
 import JSON
 
 import Web.Scotty.Internal.Types (ActionT)
@@ -86,22 +85,29 @@ findUserByLogin pool login = do
 
 --------------------------------------------------------------------------------
 
-{- Following are methods are concerned with the tweet table -}
+{- Following methods are concerned with the tweet table -}
 
 listTweets :: Pool Connection -> IO [Tweet]
 listTweets pool = do
-  res <- fetchSimple pool "SELECT * FROM tweet ORDER BY id DESC" :: IO [(Integer, TL.Text, Integer, TL.Text, TL.Text)]
-
-  return $ map (\(tweetId, text, reCount, tags, user) -> Tweet tweetId text reCount (getTags tags) (getUser user)) res
+  res <- fetchSimple pool 
+         "SELECT * FROM tweet INNER JOIN twitter_user ON tweet.name=twitter_user.screen_name ORDER BY id DESC" 
+         :: IO [(Integer, TL.Text, Integer, TL.Text, TL.Text, TL.Text, TL.Text, TL.Text, TL.Text, Integer)]
+  
+  return $ map (\(tweetId, text, reCount, tags, user, scrn, name, img, loc, followerC) -> 
+                Tweet tweetId text reCount (getTags tags) (User scrn name img loc followerC)) res
   where getTags tags = map (\tag -> Tag tag) $ TL.splitOn (TL.pack ",") tags
-        getUser user = User user "test" "test" "test" 35
 
-findArticle :: Pool Connection -> TL.Text -> IO (Maybe Article)
-findArticle pool id = do
-  res <- fetch pool (Only id) "SELECT * FROM article WHERE id=?" :: IO [(Integer, TL.Text, TL.Text)]
-  return $ oneArticle res
-  where oneArticle ((id, title, bodyText) : _) = Just $ Article id title bodyText
-        oneArticle _ = Nothing
+findTweet :: Pool Connection -> TL.Text -> IO (Maybe Tweet)
+findTweet pool id = do
+  res <- fetch pool (Only id) 
+         "SELECT * FROM tweet INNER JOIN twitter_user ON tweet.name=twitter_user.screen_name WHERE id=?"
+         :: IO [(Integer, TL.Text, Integer, TL.Text, TL.Text, TL.Text, TL.Text, TL.Text, TL.Text, Integer)]
+
+  return $ oneTweet res
+  where oneTweet ((tweetId, text, reCount, tags, user, scrn, name, img, loc, followerC) : _) = 
+                  Just $ Tweet tweetId text reCount (getTags tags) (User scrn name img loc followerC)
+        oneTweet _ = Nothing
+        getTags tags = map (\tag -> Tag tag) $ TL.splitOn (TL.pack ",") tags
 
 insertTweets :: Pool Connection -> Maybe [Tweet] -> ActionT TL.Text IO ()
 insertTweets pool Nothing = return ()
@@ -111,23 +117,23 @@ insertTweets pool (Just tweets) = do
 
 insertTweet :: Pool Connection -> Tweet -> ActionT TL.Text IO ()
 insertTweet pool tweet = do
-  liftIO $ execSqlT pool [(TL.pack $ show $ tweetId tweet), text tweet, (TL.pack $ show $ reCount tweet)]
-                         "INSERT IGNORE INTO tweet(id, text, retweet_count) VALUES(?,?,?)"
+  let tweetId' = fromInteger $ tweetId tweet
+  let reCount' = fromInteger $ reCount tweet
+  let hashtags' = compactForm $ hashtags tweet
+  let user' = screenName (user tweet)
+
+  liftIO $ execSqlT pool [tweetId', text tweet, reCount', hashtags', user']
+                         "INSERT IGNORE INTO tweet(id, tweet, reCount, hashtags, name) VALUES(?,?,?,?,?)"
   return ()
+  where fromInteger a = TL.pack $ show $ a
+        compactForm a = TL.intercalate ("," :: TL.Text) $ map (\(Tag h) -> h) $ a
 
 deleteTweet :: Pool Connection -> TL.Text -> ActionT TL.Text IO ()
 deleteTweet pool id = do
   liftIO $ execSqlT pool [id] "DELETE FROM tweet WHERE id=?"
   return ()                      
 
-{- Following are methods are concerned with the user table -}
-
-updateUser :: Pool Connection -> Maybe Article -> ActionT TL.Text IO ()
-updateUser pool Nothing = return ()
-updateUser pool (Just (Article id title bodyText)) = do
-  liftIO $ execSqlT pool [title, bodyText, (TL.decodeUtf8 $ BL.pack $ show id)]
-                         "UPDATE tweet SET text=?, retweet_count=? WHERE id=?"
-  return ()
+{- Following methods are concerned with the user table -}
 
 findUser :: Pool Connection -> TL.Text -> IO (Maybe User)
 findUser pool name = do
@@ -136,3 +142,10 @@ findUser pool name = do
   return $ oneUser res
   where oneUser ((scrn, name, img, loc, followerC) : _) = Just $ User scrn name img loc followerC
         oneUser _ = Nothing
+
+updateUser :: Pool Connection -> Maybe User -> ActionT TL.Text IO ()
+updateUser pool Nothing = return ()
+updateUser pool (Just (User a b c d e)) = do
+  --liftIO $ execSqlT pool [title, bodyText, (TL.decodeUtf8 $ BL.pack $ show id)]
+  --                       "UPDATE tweet SET text=?, retweet_count=? WHERE id=?"
+  return ()
