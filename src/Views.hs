@@ -3,7 +3,6 @@
 
 module Views where
 
-import Domain
 import JSON
 
 import GHC.Generics (Generic)
@@ -19,9 +18,9 @@ import Web.Scotty.Internal.Types
 listedTweets :: [Tweet] -> ActionM ()
 listedTweets tweets = json tweets
 
-viewArticle :: Maybe Article -> ActionM ()
-viewArticle Nothing = json ()
-viewArticle (Just article) = json article
+viewTweet :: Maybe Tweet -> ActionM ()
+viewTweet Nothing = json ()
+viewTweet (Just tweet) = json tweet
 
 insertedTweets :: Maybe [Tweet] -> ActionM ()
 insertedTweets tweets = json tweets
@@ -31,7 +30,7 @@ deletedTweet id = json ()
 
 {- Following is concerned with displaying the User -}
 
-updatedUser :: Maybe Article -> ActionM ()
+updatedUser :: Maybe User -> ActionM ()
 updatedUser article = json ()
 
 viewUser :: Maybe User -> ActionM ()
