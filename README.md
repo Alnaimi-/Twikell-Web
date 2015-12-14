@@ -25,16 +25,16 @@ Password: abc123
 
 To view all tweets in the DB try:
 - http://localhost:3000/tweets
-- curl -X GET http://localhost:3000/tweets
+- curl -X GET http://localhost:3000/tweet
 -- PS no authentication is required here.
 
 To view a certain tweet in DB try:
-- http://localhost:3000/tweets?id=X
-- curl -X GET -d 'id=X' http://localhost:3000/tweets
--- where X is the id of a tweet in the db.
+- http://localhost:3000/tweet/X
+- curl -X GET http://localhost:3000/tweet/X
+-- where X is the screen_user in the db.
 
 To Insert tweets into the DB try:
-- curl -u hamza:abc123 -X POST -d 'name=X' http://localhost:3000/admin/tweet
+- curl -u hamza:abc123 -X POST -d 'name=X' http://localhost:3000/admin/tweet/
 -- Where X is the screen_name of a Twitter user. I.e. katyperry.
 
 To delete tweets from the DB try:

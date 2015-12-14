@@ -87,10 +87,10 @@ findUserByLogin pool login = do
 
 {- Following methods are concerned with the tweet table -}
 
-listTweets :: Pool Connection -> IO [Tweet]
-listTweets pool = do
-  res <- fetchSimple pool 
-         "SELECT * FROM tweet INNER JOIN twitter_user ON tweet.name=twitter_user.screen_name ORDER BY id DESC" 
+listTweets :: Pool Connection -> TL.Text -> IO [Tweet]
+listTweets pool name = do
+  res <- fetch pool (Only name)
+         "SELECT * FROM tweet INNER JOIN twitter_user ON tweet.name=twitter_user.screen_name WHERE screen_name LIKE ? ORDER BY id DESC"
          :: IO [(Integer, TL.Text, Integer, TL.Text, TL.Text, TL.Text, TL.Text, TL.Text, TL.Text, Integer)]
   
   return $ map (\(tweetId, text, reCount, tags, user, scrn, name, img, loc, followerC) -> 
@@ -99,9 +99,9 @@ listTweets pool = do
 
 findTweet :: Pool Connection -> TL.Text -> IO (Maybe Tweet)
 findTweet pool id = do
-  res <- fetch pool (Only id) 
-         "SELECT * FROM tweet INNER JOIN twitter_user ON tweet.name=twitter_user.screen_name WHERE id=?"
-         :: IO [(Integer, TL.Text, Integer, TL.Text, TL.Text, TL.Text, TL.Text, TL.Text, TL.Text, Integer)]
+  res <- fetch pool (Only id)
+           "SELECT * FROM tweet INNER JOIN twitter_user ON tweet.name=twitter_user.screen_name WHERE id=?"
+           :: IO [(Integer, TL.Text, Integer, TL.Text, TL.Text, TL.Text, TL.Text, TL.Text, TL.Text, Integer)]
 
   return $ oneTweet res
   where oneTweet ((tweetId, text, reCount, tags, user, scrn, name, img, loc, followerC) : _) = 
@@ -117,16 +117,15 @@ insertTweets pool (Just tweets) = do
 
 insertTweet :: Pool Connection -> Tweet -> ActionT TL.Text IO ()
 insertTweet pool tweet = do
-  let tweetId' = fromInteger $ tweetId tweet
-  let reCount' = fromInteger $ reCount tweet
+  let tweetId' = TL.pack $ show $ tweetId tweet
+  let reCount' = TL.pack $ show $ reCount tweet
   let hashtags' = compactForm $ hashtags tweet
   let user' = screenName (user tweet)
 
   liftIO $ execSqlT pool [tweetId', text tweet, reCount', hashtags', user']
-                         "INSERT IGNORE INTO tweet(id, tweet, reCount, hashtags, name) VALUES(?,?,?,?,?)"
+             "INSERT IGNORE INTO tweet(id, tweet, reCount, hashtags, name) VALUES(?,?,?,?,?)"
   return ()
-  where fromInteger a = TL.pack $ show $ a
-        compactForm a = TL.intercalate ("," :: TL.Text) $ map (\(Tag h) -> h) $ a
+  where compactForm a = TL.intercalate ("," :: TL.Text) $ map (\(Tag h) -> h) $ a
 
 deleteTweet :: Pool Connection -> TL.Text -> ActionT TL.Text IO ()
 deleteTweet pool id = do
@@ -137,7 +136,9 @@ deleteTweet pool id = do
 
 findUser :: Pool Connection -> TL.Text -> IO (Maybe User)
 findUser pool name = do
-  res <- fetch pool (Only name) "SELECT * FROM twitter_user WHERE screen_name=?" :: IO [(TL.Text, TL.Text, TL.Text, TL.Text, Integer)]
+  res <- fetch pool (Only name) 
+           "SELECT * FROM twitter_user WHERE screen_name=?" 
+           :: IO [(TL.Text, TL.Text, TL.Text, TL.Text, Integer)]
 
   return $ oneUser res
   where oneUser ((scrn, name, img, loc, followerC) : _) = Just $ User scrn name img loc followerC

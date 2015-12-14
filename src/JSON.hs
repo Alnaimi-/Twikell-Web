@@ -49,7 +49,7 @@ instance FromJSON User where
   parseJSON (Object v) =
     User <$> v .: "screen_name"
          <*> v .: "name"
-         <*>v  .: "profile_image_url"
+         <*> v .: "profile_image_url"
          <*> v .: "location"
          <*> v .: "followers_count"
 

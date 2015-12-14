@@ -2,11 +2,11 @@
 
 module Main where
 
-import Db
-import Views
 import Auth
-import Domain
+import Db
+import JSON
 import RESTApi
+import Views
 
 import Web.Scotty
 import Web.Scotty.Internal.Types (ActionT)
@@ -57,44 +57,49 @@ main = do
         middleware $ staticPolicy (noDots >-> addBase "static") -- serve static files
         middleware $ logStdout                                  -- log all requests; for production use logStdout
         middleware $ basicAuth (verifyCredentials pool)         -- check if the user is authenticated for protected resources
-                       "Haskell Blog Realm" { authIsProtected = protectedResources } -- function which restricts access to some routes only for authenticated users
+                       "Twikell Indulge Yourself" { authIsProtected = protectedResources } -- function which restricts access to some routes only for authenticated users
 
         {- Following is concerned with handling Tweets -}
 
         -- LIST
-        get    "/tweets" $ do tweets <- liftIO $ listTweets pool               -- get the ist of tweets for DB
-                              listedTweets tweets                              -- show tweet list
-        
+        get    "/tweet" $ do tweets <- liftIO $ listTweets pool "%%"                     -- get the list of ALL tweets from DB
+                             listedTweets tweets                                         -- show tweet list
+
         -- VIEW
-        get    "/tweets/:id" $ do id <- param "id" :: ActionM TL.Text          -- get the article id from the request
-                                  maybeArticle <- liftIO $ findArticle pool id -- get the article from the DB
-                                  viewArticle maybeArticle                     -- show the article if it was found
+        get (regex "/tweet/(\\w*)") $ do name <- param "1" :: ActionM TL.Text            -- get the screen_name from the request
+                                         tweets <- liftIO $ listTweets pool name         -- get the tweet(s) from the DB
+                                         listedTweets tweets                             -- show the tweet list
+
+
+        -- VIEW
+        get (regex "/tweet/([0-9]*)") $ do id <- param "1" :: ActionM TL.Text            -- get the tweet id from the request
+                                           maybeTweet <- liftIO $ findTweet pool id      -- get the tweet from the DB
+                                           viewTweet maybeTweet                          -- show the tweet if it was found
 
         -- CREATE
-        post   "/admin/tweet" $ do name <- param "name" :: ActionM TL.Text     -- read the screen_name
-                                   tweets <- liftIO $ timeline "katyperry"     -- Retrieve tweets for said screen name
-                                   insertTweets pool tweets                    -- insert parsed tweets into the DB
-                                   insertedTweets tweets                       -- show info that the tweet was added
-
+        post   "/admin/tweet/:name" $ do name <- param "name" :: ActionM TL.Text         -- read the screen_name
+                                         tweets <- liftIO $ timeline $ TL.unpack name    -- Retrieve tweets for said screen name
+                                         insertTweets pool tweets                        -- insert parsed tweets into the DB
+                                         insertedTweets tweets                           -- show info that the tweet was added
         -- DELETE
-        delete "/admin/tweet/:id" $ do id <- param "id" :: ActionM TL.Text     -- get the tweet id
-                                       deleteTweet pool id                     -- delete the tweet from the DB
-                                       deletedTweet id                         -- show info that the tweet was deleted
+        delete "/admin/tweet" $ do id <- param "id" :: ActionM TL.Text                   -- get the tweet id
+                                   deleteTweet pool id                                   -- delete the tweet from the DB
+                                   deletedTweet id                                       -- show info that the tweet was deleted
 
         {- Following is concerned with handling Users -}
+
         -- VIEW
-        get    "/user/:name" $ do name <- param "name" :: ActionM TL.Text      -- get the screen_name from the request
-                                  maybeUser <- liftIO $ findUser pool name     -- get the user from the DB
-                                  viewUser maybeUser                           -- show the user if it was found
+        get    "/user" $ do name <- param "name" :: ActionM TL.Text                      -- get the screen_name from the request
+                            maybeUser <- liftIO $ findUser pool name                     -- get the user from the DB
+                            viewUser maybeUser                                           -- show the user if it was found
         -- UPDATE
-        put    "/admin/user" $ do tweet <- getArticleParam                     -- read the request body, try to parse it into article
-                                  updateUser pool tweet                        -- update parsed article in the DB
-                                  updatedUser tweet                            -- show info that the article was updated
+        put    "/admin/user" $ do user <- getArticleParam                                -- read the request body of type JSON & attempt to parse it
+                                  updateUser pool user                                   -- update parsed article in the DB
+                                  updatedUser user                                       -- show info that the article was updated
 
 ----------------------------------------------
 
 -- Parse the request body into the Article
-getArticleParam :: ActionT TL.Text IO (Maybe Article)
+getArticleParam :: ActionT TL.Text IO (Maybe User)
 getArticleParam = do b <- body
-                     return $ (decode b :: Maybe Article)
-                     where makeArticle s = ""
+                     return $ (decode b :: Maybe User)

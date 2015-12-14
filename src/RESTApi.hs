@@ -6,14 +6,15 @@ module RESTApi (
   searchUser
 ) where
 
+import Exceptions
+import JSON
+
 import Data.ByteString (ByteString)
 import qualified Control.Exception as E
 import Data.Maybe
 import Data.Aeson
 import Network.HTTP.Conduit
 import Web.Authenticate.OAuth
-import Exceptions
-import JSON
 
 -- | Authentication for the Auth Twitter API
 myoauth :: OAuth
@@ -53,7 +54,7 @@ decodeRequest req = do
 -- | This function reads a timeline JSON and parse it using the 'Tweet' type.
 timeline :: String -- ^ Screen name of the user
          -> IO (Maybe [Tweet]) -- ^ If there's an error, parsing the JSON then
-                                       --   return Left with the String, Else [Tweet] obj.
+                               --   return Left with the String, Else [Tweet] obj.
 timeline name = do
   -- Firstly, we create a HTTP request with method GET.
   -- This particular request searches for a screen name, and retreives their timeline.

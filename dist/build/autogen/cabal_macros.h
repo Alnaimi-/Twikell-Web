@@ -140,19 +140,19 @@
   (major1) == 4 && (major2) <  8 || \
   (major1) == 4 && (major2) == 8 && (minor) <= 0)
 
-/* tool ghc-7.10.2.20151118 */
-#define TOOL_VERSION_ghc "7.10.2.20151118"
+/* tool ghc-7.10.3 */
+#define TOOL_VERSION_ghc "7.10.3"
 #define MIN_TOOL_VERSION_ghc(major1,major2,minor) (\
   (major1) <  7 || \
   (major1) == 7 && (major2) <  10 || \
-  (major1) == 7 && (major2) == 10 && (minor) <= 2)
+  (major1) == 7 && (major2) == 10 && (minor) <= 3)
 
-/* tool ghc-pkg-7.10.2.20151118 */
-#define TOOL_VERSION_ghc_pkg "7.10.2.20151118"
+/* tool ghc-pkg-7.10.3 */
+#define TOOL_VERSION_ghc_pkg "7.10.3"
 #define MIN_TOOL_VERSION_ghc_pkg(major1,major2,minor) (\
   (major1) <  7 || \
   (major1) == 7 && (major2) <  10 || \
-  (major1) == 7 && (major2) == 10 && (minor) <= 2)
+  (major1) == 7 && (major2) == 10 && (minor) <= 3)
 
 /* tool haddock-2.16.1 */
 #define TOOL_VERSION_haddock "2.16.1"
@@ -196,5 +196,5 @@
   (major1) == 2 && (major2) <  24 || \
   (major1) == 2 && (major2) == 24 && (minor) <= 0)
 
-#define CURRENT_PACKAGE_KEY "Twike_K4uvfhmAouB7Ftc1oAMRtd"
+#define CURRENT_PACKAGE_KEY "Twike_7DBxbhynHYSBwY7jHOzwjg"
 
