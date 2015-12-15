@@ -24,7 +24,8 @@ import Data.Pool(Pool, createPool, withResource)
 import qualified Data.Text.Lazy as TL
 import Data.Aeson
 
--- Parse file "application.conf" and get the DB connection info
+-- | Parse file "application.conf" and construct a databse
+--   connection from it.
 makeDbConfig :: C.Config -> IO (Maybe Db.DbConfig)
 makeDbConfig conf = do
   name <- C.lookup conf "database.name" :: IO (Maybe String)
@@ -34,8 +35,8 @@ makeDbConfig conf = do
                     <*> user
                     <*> password
 
--- The function knows which resources are available only for the
--- authenticated users
+-- | The function returns whether if a resource in a path
+--   is restricted to authenticated users.
 protectedResources ::  Request -> IO Bool
 protectedResources request = do
   let path = pathInfo request
@@ -84,8 +85,8 @@ main = do
         -- DELETE
         -- Use parameter passing, here instead to show that it's possible
         delete "/admin/tweet" $ do id <- param "id" :: ActionM TL.Text                   -- get the tweet id
-                                   deleteTweet pool id                                   -- delete the tweet from the DB
-                                   deletedTweet id                                       -- show info that the tweet was deleted
+                                   maybeDeleted <- liftIO $ deleteTweet pool id          -- delete the tweet from the DB
+                                   deletedTweet maybeDeleted                                       -- show info that the tweet was deleted
 
         {- Following is concerned with handling Users -}
 
