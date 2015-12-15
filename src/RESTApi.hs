@@ -1,9 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module RESTApi (
-  timeline,
-  followers,
-  searchUser
+  getTimeline,
+  getUsers,
+  searchUsers
 ) where
 
 import Exceptions
@@ -51,11 +51,11 @@ decodeRequest req = do
 -------------------------- Twitter API Querying Methods --------------------------
 ----------------------------------------------------------------------------------
 
--- | This function reads a timeline JSON and parse it using the 'Tweet' type.
-timeline :: String -- ^ Screen name of the user
+-- | This function retrieves the timeline of a certain user
+getTimeline :: String -- ^ Screen name of the user
          -> IO (Maybe [Tweet]) -- ^ If there's an error, parsing the JSON then
                                --   return Left with the String, Else [Tweet] obj.
-timeline name = do
+getTimeline name = do
   -- Firstly, we create a HTTP request with method GET.
   -- This particular request searches for a screen name, and retreives their timeline.
   req <- parseUrl $ "https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=" ++ name
@@ -63,22 +63,23 @@ timeline name = do
   -- Tweet object parsed by decodeRequest method.
   decodeRequest req -- ^ passing the Request object.
 
--- | This function retrieves all followers of a certain user. Up to 200.
-followers :: String -- ^ Screen name of the user
-          -> IO (Maybe Users)
-followers name = do
-  -- Create a HTTP request with GET; in this scenario we are searching registered users 
-  req <- parseUrl $ "https://api.twitter.com/1.1/followers/list.json?cursor=-1&screen_name=" ++ name ++ "&count=50"
-
-  -- List of followers returned by decoding the Request
+-- | This function retrieves information about users
+--   We only interested in one, but twitter only offers [Users]
+getUsers :: String -- ^ Screen name of the user
+        -> IO (Maybe [User])
+getUsers name = do
+  -- Create a HTTP request with GET; here we are retrieved a specific registered user
+  req <- parseUrl $ "https://api.twitter.com/1.1/users/lookup.json?screen_name=" ++ name
+ 
   decodeRequest req
 
 -- | This function takes a search query and returns all Users matching query.
-searchUser :: String -- ^ Search query for user
+searchUsers :: String -- ^ Search query for user
            -> IO (Maybe [User]) -- ^ Just like timeline, this time we return [User]
-searchUser query = do 
+searchUsers query = do 
   -- Create a HTTP request with GET; in this scenario we are searching registered users 
-  req <- parseUrl $ "https://api.twitter.com/1.1/users/search.json?q=" ++ query ++ "&page=1&count=3"
+  -- max count is 20 / page
+  req <- parseUrl $ "https://api.twitter.com/1.1/users/search.json?q=" ++ query ++ "&page=1&count=20"
 
   decodeRequest req
 
