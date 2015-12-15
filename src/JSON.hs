@@ -63,17 +63,6 @@ instance ToJSON User where
                  "location"       .= location,
                  "follower_count" .= followerCount]
 
--- | Type constructor for Users, representing a 
---   [User]. This is because the follower request
---   for twitter returns a "Users":[{},{}] JSON.
-data Users = Users [User] deriving (Show, Generic)
-
--- | Specify the parsing of Users object from JSON
-instance FromJSON Users where
-  parseJSON (Object v) =
-    Users <$> v .: "users" -- ^ This parsing consists of parsing each individual user
-                           --   inside the users object / array.
-
 -- | Type constructor for tags, which simply consists
 --   of a Text object.
 data Tag = Tag TL.Text deriving (Show, Generic)
