@@ -70,7 +70,7 @@ findUserByLogin pool login = do
 {- Following methods are concerned with the tweet table -}
 
 -- | Lists all tweets matching a certain query
-listTweets :: Pool Connection -> TL.Text -> IO [Tweet]
+listTweets :: Pool Connection -> TL.Text -> IO (Maybe [Tweet])
 listTweets pool name = do
   res <- fetchT pool (Only name)
            -- Preform an inner join on the two tables; returning associated user for each tweet.
@@ -78,11 +78,13 @@ listTweets pool name = do
            :: IO [(Integer, TL.Text, Integer, TL.Text, TL.Text, TL.Text, TL.Text, TL.Text, TL.Text, Integer)]
   
   -- Map the parseTweet function on the result of fetch
-  return $ map parseTweet res 
+  return $ isEmpty $ map parseTweet res 
 
-  where getTags tags = map (\tag -> Tag tag) $ TL.splitOn (TL.pack ",") tags                -- ^ Splits the tags saved as X,Y,Z 
+  where getTags tags = map (\tag -> Tag tag) $ TL.splitOn (TL.pack ",") tags            -- ^ Splits the tags saved as X,Y,Z 
         parseTweet (tweetId, text, reCount, tags, user, scrn, name, img, loc, flwrC) =  --   and reconstruct into Tag type
           Tweet tweetId text reCount (getTags tags) (User scrn name img loc flwrC)      -- ^ Reconstruct a tweet from the fetchedresults.
+        isEmpty [] = Nothing
+        isEmpty xs = Just $ xs  
 
 -- | List a single tweet based on user ID
 findTweet :: Pool Connection -> TL.Text -> IO (Maybe Tweet)
@@ -100,7 +102,7 @@ findTweet pool id = do
         oneTweet _ = Nothing                                                                           -- If tweet not fond return Nothing
 
 -- | Insert list of tweets into database based on returned tweets from
---   Querying the REST API of twitter.
+--   Querying the REST API of twitter
 insertTweets :: Pool Connection -> Maybe [Tweet] -> ActionT TL.Text IO ()
 insertTweets pool Nothing = return ()      -- If no tweets were returned, then return empty
 insertTweets pool (Just tweets) = do       -- If tweets were returned by the REST request
@@ -133,16 +135,45 @@ deleteTweet pool id = do
 
 {- Following methods are concerned with the user table -}
 
--- | Find a user by his unique screen_name
-findUser :: Pool Connection -> TL.Text -> IO (Maybe User)
-findUser pool name = do
-  res <- fetchT pool (Only name) 
-           "SELECT * FROM twitter_user WHERE screen_name=?" 
-           :: IO [(TL.Text, TL.Text, TL.Text, TL.Text, Integer)]
+-- | Lists all users matching a certain query
+listUsers :: Pool Connection -> TL.Text -> IO (Maybe [User])
+listUsers pool name = do
+  res <- fetchT pool (Only name)
+           -- Preform an inner join on the two tables; returning associated user for each tweet.
+           "SELECT * FROM twitter_user WHERE screen_name LIKE ?" -- The LIKE allows us to get all users
+           :: IO [(TL.Text, TL.Text, TL.Text, TL.Text, Integer)] -- Or a single user, by using same method!
+  
+  -- Map the parseTweet function on the result of fetch
+  return $ isEmpty $ map parseUser res 
 
-  return $ oneUser res
-  where oneUser ((scrn, name, img, loc, flwrC) : _) = Just $ User scrn name img loc flwrC -- Return only first, as again there shouldn't be more
-        oneUser _ = Nothing                                                                       -- If user not found, return Nothing
+  where parseUser (scrn, name, img, loc, flwrC) = User scrn name img loc flwrC
+        isEmpty [] = Nothing   -- If no users found matching query, return Nothing
+        isEmpty xs = Just $ xs -- Else return Just the users
+
+-- | Insert list of users into database based on returned users from
+--   Querying the REST API of twitter
+insertUsers :: Pool Connection -> Maybe [User] -> ActionT TL.Text IO ()
+insertUsers pool Nothing = return ()        -- If no user was found, return Nothing
+insertUsers pool (Just users) = do 
+  -- mapM_ as it shouldn't return anyhting
+  -- Insert each user in the list.
+  a <- mapM_ (insertUser pool) users
+  return ()
+
+-- | Insert a user into the database
+insertUser :: Pool Connection -> User -> ActionT TL.Text IO ()
+insertUser pool user = do     
+  let scrn'  = screenName user         
+  let name'  = name user 
+  let img'   = image user
+  let loc'   = location user
+  let flwrC' = TL.pack $ show $ followerCount user
+  
+  -- Prepare and set statement according to variables above
+  liftIO $ execSqlT pool [scrn', name', img', loc', flwrC']
+             "INSERT IGNORE INTO twitter_user(screen_name, name, image, location, followers) VALUES(?,?,?,?,?)"
+  -- Rewrap into Just user to display
+  return ()
 
 -- | Update a user based on unique screen_name
 updateUser :: Pool Connection -> Maybe User -> ActionT TL.Text IO ()
