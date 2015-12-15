@@ -67,7 +67,7 @@ main = do
 
         -- VIEW
         get (regex "/tweet/(\\w*)") $ do name <- param "1" :: ActionM TL.Text            -- get the screen_name from the request
-                                         tweets <- liftIO $ listTweets pool name         -- get the tweet(s) from the DB
+                                         tweets <- liftIO $ listTweets pool name         -- get tweet(s) from the DB belonging to screen_name
                                          listedTweets tweets                             -- show the tweet list
 
 
@@ -82,6 +82,7 @@ main = do
                                          insertTweets pool tweets                        -- insert parsed tweets into the DB
                                          insertedTweets tweets                           -- show info that the tweet was added
         -- DELETE
+        -- Use parameter passing, here instead to show that it's possible
         delete "/admin/tweet" $ do id <- param "id" :: ActionM TL.Text                   -- get the tweet id
                                    deleteTweet pool id                                   -- delete the tweet from the DB
                                    deletedTweet id                                       -- show info that the tweet was deleted
@@ -89,9 +90,9 @@ main = do
         {- Following is concerned with handling Users -}
 
         -- VIEW
-        get    "/user" $ do name <- param "name" :: ActionM TL.Text                      -- get the screen_name from the request
-                            maybeUser <- liftIO $ findUser pool name                     -- get the user from the DB
-                            viewUser maybeUser                                           -- show the user if it was found
+        get    "/user/:name" $ do name <- param "name" :: ActionM TL.Text                -- get the screen_name from the request
+                                  maybeUser <- liftIO $ findUser pool name               -- get the user from the DB
+                                  viewUser maybeUser                                     -- show the user if it was found
         -- UPDATE
         put    "/admin/user" $ do user <- getArticleParam                                -- read the request body of type JSON & attempt to parse it
                                   updateUser pool user                                   -- update parsed article in the DB

@@ -17,7 +17,7 @@ version = Version [0,1,0,0] []
 bindir, libdir, datadir, libexecdir, sysconfdir :: FilePath
 
 bindir     = "/home/bloo/.cabal/bin"
-libdir     = "/home/bloo/.cabal/lib/x86_64-linux-ghc-7.10.3/Twikell-Web-0.1.0.0-7DBxbhynHYSBwY7jHOzwjg"
+libdir     = "/home/bloo/.cabal/lib/x86_64-linux-ghc-7.10.3/Twikell-Web-0.1.0.0-Haw4lhjgD4S2uORaRqhy0a"
 datadir    = "/home/bloo/.cabal/share/x86_64-linux-ghc-7.10.3/Twikell-Web-0.1.0.0"
 libexecdir = "/home/bloo/.cabal/libexec"
 sysconfdir = "/home/bloo/.cabal/etc"
