@@ -12,8 +12,8 @@ import Data.Pool(Pool, createPool, withResource)
 import Database.MySQL.Simple
 import Data.Hash.MD5
 
--- Encodes provided password with md5 and then compares it with the hash
--- stored in the DB
+-- | Encodes provided password with md5 and then compares it with the hash
+--   stored in the DB to verify a senstive request.
 verifyCredentials :: Pool Connection -> B.ByteString -> B.ByteString -> IO Bool
 verifyCredentials pool user password = do
    pwd <- findUserByLogin pool (BC.unpack user)
