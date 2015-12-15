@@ -55,49 +55,76 @@ main = do
     Just conf -> do      
       pool <- createPool (newConn conf) close 1 64 10
       scotty 3000 $ do
-        middleware $ staticPolicy (noDots >-> addBase "static") -- serve static files
-        middleware $ logStdout                                  -- log all requests; for production use logStdout
-        middleware $ basicAuth (verifyCredentials pool)         -- check if the user is authenticated for protected resources
-                       "Twikell Indulge Yourself" { authIsProtected = protectedResources } -- function which restricts access to some routes only for authenticated users
+        middleware $ staticPolicy (noDots >-> addBase "static")               -- serve static files
+        middleware $ logStdout                                                -- log all requests; for production use logStdout
+        middleware $ basicAuth (verifyCredentials pool)                       -- check if the user is authenticated for protected resources
+          "Twikell Indulge Yourself" { authIsProtected = protectedResources } -- function which restricts access to some routes only for authenticated users
 
         {- Following is concerned with handling Tweets -}
 
         -- LIST
-        get    "/tweet" $ do tweets <- liftIO $ listTweets pool "%%"                     -- get the list of ALL tweets from DB
-                             listedTweets tweets                                         -- show tweet list
+        get    "/tweet" $ do 
+          tweets <- liftIO $ listTweets pool "%%"                   -- get the list of ALL tweets from DB
+          listedTweets tweets                                       -- show tweet list
 
         -- VIEW
-        get (regex "/tweet/(\\w*)") $ do name <- param "1" :: ActionM TL.Text            -- get the screen_name from the request
-                                         tweets <- liftIO $ listTweets pool name         -- get tweet(s) from the DB belonging to screen_name
-                                         listedTweets tweets                             -- show the tweet list
-
+        get (regex "/tweet/(\\w*)") $ do 
+          name <- param "1" :: ActionM TL.Text                      -- get the screen_name from the request
+          tweets <- liftIO $ listTweets pool name                   -- get tweet(s) from the DB belonging to name
+          listedTweets tweets                                       -- show the tweet list
 
         -- VIEW
-        get (regex "/tweet/([0-9]*)") $ do id <- param "1" :: ActionM TL.Text            -- get the tweet id from the request
-                                           maybeTweet <- liftIO $ findTweet pool id      -- get the tweet from the DB
-                                           viewTweet maybeTweet                          -- show the tweet if it was found
+        get (regex "/tweetid/([0-9]*)") $ do 
+          id <- param "1" :: ActionM TL.Text                        -- get the tweet id from the request
+          maybeTweet <- liftIO $ findTweet pool id                  -- get the tweet from the DB
+          viewTweet maybeTweet                                      -- show the tweet if it was found
 
         -- CREATE
-        post   "/admin/tweet/:name" $ do name <- param "name" :: ActionM TL.Text         -- read the screen_name
-                                         tweets <- liftIO $ timeline $ TL.unpack name    -- Retrieve tweets for said screen name
-                                         insertTweets pool tweets                        -- insert parsed tweets into the DB
-                                         insertedTweets tweets                           -- show info that the tweet was added
+        post   "/admin/tweet/:name" $ do 
+          name <- param "name" :: ActionM TL.Text                   -- read the screen_name
+          tweets <- liftIO $ getTimeline $ TL.unpack name           -- Retrieve tweets for said screen name
+          insertTweets pool tweets                                  -- insert parsed tweets into the DB
+          insertedTweets tweets                                     -- Echo the tweets retrieved from Twitter
+        
         -- DELETE
-        -- Use parameter passing, here instead to show that it's possible
-        delete "/admin/tweet" $ do id <- param "id" :: ActionM TL.Text                   -- get the tweet id
-                                   maybeDeleted <- liftIO $ deleteTweet pool id          -- delete the tweet from the DB
-                                   deletedTweet maybeDeleted                                       -- show info that the tweet was deleted
+        -- Using param passing here instead just to demonstrate
+        delete "/admin/tweet" $ do 
+          id <- param "id" :: ActionM TL.Text                       -- get the tweet id
+          maybeDeleted <- liftIO $ deleteTweet pool id              -- delete the tweet from the DB
+          deletedTweet maybeDeleted                                 -- show info that the tweet was deleted
 
         {- Following is concerned with handling Users -}
 
+        -- LIST
+        get    "/user" $ do 
+          users <- liftIO $ listUsers pool "%%"                     -- get the list of ALL users from DB
+          listedUsers users                                         -- show user list
+
         -- VIEW
-        get    "/user/:name" $ do name <- param "name" :: ActionM TL.Text                -- get the screen_name from the request
-                                  maybeUser <- liftIO $ findUser pool name               -- get the user from the DB
-                                  viewUser maybeUser                                     -- show the user if it was found
+        get    "/user/:name" $ do 
+          name <- param "name" :: ActionM TL.Text                   -- get the screen_name from the request
+          maybeUser <- liftIO $ listUsers pool name                 -- get the user from the DB, using same method as listUsers
+          listedUsers maybeUser                                     -- show the user if he was found
+        
+        -- CREATE
+        post   "/admin/user/:name" $ do 
+          name <- param "name" :: ActionM TL.Text                   -- get the screen_name(s) from the request
+          users <- liftIO $ getUsers $ TL.unpack name               -- get the user(s) from Twitter, as Haskell [User]
+          insertUsers pool users                                    -- insert the users into Database.
+          listedUsers users                                         -- Echo the user's data retrieved from Twitter
+        
         -- UPDATE
-        put    "/admin/user" $ do user <- getUserParam                                   -- read the request body of type JSON & attempt to parse it
-                                  updateUser pool user                                   -- update parsed article in the DB
-                                  updatedUser user                                       -- show info that the article was updated
+        put    "/admin/user" $ do 
+          user <- getUserParam                                      -- read the request body of type JSON & parse it
+          updateUser pool user                                      -- update parsed user in the DB
+          updatedUser user                                          -- show info that the user was updated
+
+        -- GET
+        get    "/search/:name" $ do
+          query <- param "name" :: ActionM TL.Text                  -- get the param name representing search query
+          users <- liftIO $ searchUsers $ TL.unpack query           -- send a GET request to the Twitter API
+          listedUsers users                                         -- List all users matching query
+                                                                    -- ^ PS this doesn't add resulted users to DB
 
 ----------------------------------------------
 
