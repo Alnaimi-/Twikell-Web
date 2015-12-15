@@ -36,25 +36,6 @@ newConn conf = connect defaultConnectInfo {
   connectDatabase = dbName conf
 }
 
---------------------------------------------------------------------------------
--- Utilities for interacting with the DB.
--- No transactions.
---
--- Accepts arguments
-fetch :: (QueryResults r, QueryParams q) => Pool M.Connection -> q -> Query -> IO [r]
-fetch pool args sql = withResource pool retrieve
-  where retrieve conn = query conn sql args
-
--- No arguments -- just pure sql
-fetchSimple :: QueryResults r => Pool M.Connection -> Query -> IO [r]
-fetchSimple pool sql = withResource pool retrieve
-  where retrieve conn = query_ conn sql
-
--- Update database
-execSql :: QueryParams q => Pool M.Connection -> q -> Query -> IO Int64
-execSql pool args sql = withResource pool ins
-  where ins conn = execute conn sql args
-
 -------------------------------------------------------------------------------
 -- Utilities for interacting with the DB.
 -- Transactions.
@@ -78,7 +59,7 @@ execSqlT pool args sql = withResource pool ins
 
 findUserByLogin :: Pool Connection -> String -> IO (Maybe String)
 findUserByLogin pool login = do
-  res <- liftIO $ fetch pool (Only login) "SELECT * FROM user WHERE login=?" :: IO [(Integer, String, String)]
+  res <- liftIO $ fetchT pool (Only login) "SELECT * FROM user WHERE login=?" :: IO [(Integer, String, String)]
   return $ password res
   where password [(_, _, pwd)] = Just pwd
         password _ = Nothing
@@ -89,30 +70,34 @@ findUserByLogin pool login = do
 
 listTweets :: Pool Connection -> TL.Text -> IO [Tweet]
 listTweets pool name = do
-  res <- fetch pool (Only name)
+  res <- fetchT pool (Only name)
          "SELECT * FROM tweet INNER JOIN twitter_user ON tweet.name=twitter_user.screen_name WHERE screen_name LIKE ? ORDER BY id DESC"
          :: IO [(Integer, TL.Text, Integer, TL.Text, TL.Text, TL.Text, TL.Text, TL.Text, TL.Text, Integer)]
   
-  return $ map (\(tweetId, text, reCount, tags, user, scrn, name, img, loc, followerC) -> 
-                Tweet tweetId text reCount (getTags tags) (User scrn name img loc followerC)) res
+  return $ map parseTweet res
+
   where getTags tags = map (\tag -> Tag tag) $ TL.splitOn (TL.pack ",") tags
+        parseTweet (tweetId, text, reCount, tags, user, scrn, name, img, loc, followerC) =
+          Tweet tweetId text reCount (getTags tags) (User scrn name img loc followerC)
 
 findTweet :: Pool Connection -> TL.Text -> IO (Maybe Tweet)
 findTweet pool id = do
-  res <- fetch pool (Only id)
+  res <- fetchT pool (Only id)
            "SELECT * FROM tweet INNER JOIN twitter_user ON tweet.name=twitter_user.screen_name WHERE id=?"
            :: IO [(Integer, TL.Text, Integer, TL.Text, TL.Text, TL.Text, TL.Text, TL.Text, TL.Text, Integer)]
 
   return $ oneTweet res
-  where oneTweet ((tweetId, text, reCount, tags, user, scrn, name, img, loc, followerC) : _) = 
+
+  where getTags tags = map (\tag -> Tag tag) $ TL.splitOn (TL.pack ",") tags
+        oneTweet ((tweetId, text, reCount, tags, user, scrn, name, img, loc, followerC) : _) = 
                   Just $ Tweet tweetId text reCount (getTags tags) (User scrn name img loc followerC)
         oneTweet _ = Nothing
-        getTags tags = map (\tag -> Tag tag) $ TL.splitOn (TL.pack ",") tags
 
 insertTweets :: Pool Connection -> Maybe [Tweet] -> ActionT TL.Text IO ()
 insertTweets pool Nothing = return ()
 insertTweets pool (Just tweets) = do
   a <- mapM_ (insertTweet pool) tweets
+
   return ()
 
 insertTweet :: Pool Connection -> Tweet -> ActionT TL.Text IO ()
@@ -136,7 +121,7 @@ deleteTweet pool id = do
 
 findUser :: Pool Connection -> TL.Text -> IO (Maybe User)
 findUser pool name = do
-  res <- fetch pool (Only name) 
+  res <- fetchT pool (Only name) 
            "SELECT * FROM twitter_user WHERE screen_name=?" 
            :: IO [(TL.Text, TL.Text, TL.Text, TL.Text, Integer)]
 
@@ -146,7 +131,7 @@ findUser pool name = do
 
 updateUser :: Pool Connection -> Maybe User -> ActionT TL.Text IO ()
 updateUser pool Nothing = return ()
-updateUser pool (Just (User a b c d e)) = do
-  --liftIO $ execSqlT pool [title, bodyText, (TL.decodeUtf8 $ BL.pack $ show id)]
-  --                       "UPDATE tweet SET text=?, retweet_count=? WHERE id=?"
+updateUser pool (Just (User scrn name img loc followerC)) = do
+  liftIO $ execSqlT pool [name, img, loc, (TL.decodeUtf8 $ BL.pack $ show followerC), scrn]
+                         "UPDATE twitter_user SET name=?, image=?, location=?, followers=? WHERE screen_name=?"
   return ()

@@ -46,7 +46,11 @@ Password: abc123
 
 ### Users
 
-**To View a user from the DB try:**
+**To View a user in the DB try:**
 - http://localhost:3000/user/X
 - curl -X GET http://localhost:3000/user/X 
+  - *Where X is the screen_name of a Twitter user. I.e. katyperry.*
+
+**To Update a user in the DB try:**
+- curl -u hamza:abc123 -H "Content-Type: application/json" -X PUT -d '{"screen_name":"X","name":"Ben Steer","profile_image_url":"updated.com","location":"London","followers_count":1}' http://localhost:3000/admin/user
   - *Where X is the screen_name of a Twitter user. I.e. katyperry.*

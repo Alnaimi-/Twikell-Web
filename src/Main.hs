@@ -94,13 +94,13 @@ main = do
                                   maybeUser <- liftIO $ findUser pool name               -- get the user from the DB
                                   viewUser maybeUser                                     -- show the user if it was found
         -- UPDATE
-        put    "/admin/user" $ do user <- getArticleParam                                -- read the request body of type JSON & attempt to parse it
+        put    "/admin/user" $ do user <- getUserParam                                   -- read the request body of type JSON & attempt to parse it
                                   updateUser pool user                                   -- update parsed article in the DB
                                   updatedUser user                                       -- show info that the article was updated
 
 ----------------------------------------------
 
--- Parse the request body into the Article
-getArticleParam :: ActionT TL.Text IO (Maybe User)
-getArticleParam = do b <- body
-                     return $ (decode b :: Maybe User)
+-- | Parse the request body of type JSON, returning User object
+getUserParam :: ActionT TL.Text IO (Maybe User)
+getUserParam = do b <- body
+                  return $ (decode b :: Maybe User)
