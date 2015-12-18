@@ -41,8 +41,9 @@ Any cabal problems; you're on your own.
 
 ## Using the project
 
-CD into the source folder, run GHCI and load the main
-1. `cd /path-to-twikell-web/src
+CD into the source folder, run GHCI and load the main:
+
+1. `cd /path-to-twikell-web/src`
 2. `ghci`
 3. `:l Main.hs` 
 4. `main`
