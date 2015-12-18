@@ -60,6 +60,8 @@ Password: *abc123*
 
 ### Tweets
 
+**For accessing the remote EC2 server, replace all occurences of localhost with 54.194.118.199. Remember first run the server remotely, following above steps to first ssh and then loading main.**
+
 **To view all tweets in the DB try:**
 - `http://localhost:3000/tweet`
 - `curl -X GET http://localhost:3000/tweet`
