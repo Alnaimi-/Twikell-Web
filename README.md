@@ -4,6 +4,8 @@ This is a Haskell API running on the Scotty web framework. The API runs on local
 
 The framework is currently hosted and running on Amazon's EC2 server.
 
+For haddock style documentation, open up the *index.html* file located inside the *haddock* folder.
+
 Technologies used:
 
 * `Aeson` for JSON encoding/decoding
