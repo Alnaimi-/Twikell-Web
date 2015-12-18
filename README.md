@@ -40,9 +40,10 @@ before proceeding.
 From here you can either cd into the source folder, run GHCI and load the main
 - `:l Main.hs`
 - `main`
+- or compile and run from main folder. 
 
-or compile and run from main folder. Any other problems, you're on your own.
-*PS. Something that helped personally was `rm -rf ~/.ghc ~/.cabal and reinstall both, have fun!*
+Any other problems, you're on your own.
+*PS. Something that helped personally was:* `rm -rf ~/.ghc ~/.cabal` * and reinstall both, have fun!*
 
 ## Using the project
 
