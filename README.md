@@ -4,12 +4,10 @@ This is a Haskell API running on the Scotty web framework. The API runs on local
 
 The framework is currently hosted and running on Amazon's EC2 server.
 
-To ssh to the EC2 server you must first download the *twikell-public.pem* key pair for authentication.
+To ssh to the EC2 server you must first download the *twikell-public.pem* key pair for authentication. Once it's downloaded CD into the folder and run in terminal:
 
-CD into the folder where above key resides and run in terminal:
-
-  `chmod 600 twikell-public.pem`
-  `ssh -v -i twikell-public.pem ubuntu@ec2-54-194-118-199.eu-west-1.compute.amazonaws.com`
+1. `chmod 600 twikell-public.pem`
+2. `ssh -v -i twikell-public.pem ubuntu@ec2-54-194-118-199.eu-west-1.compute.amazonaws.com`
 
 Technologies used:
 
@@ -39,11 +37,18 @@ before proceeding.
 
 4. Finally run the mysql dump to populate the database.
 
-Any other problems, you on your own.
+From here you can either cd into the source folder, run GHCI and load the main
+- `:l Main.hs`
+- `main`
+
+or compile and run from main folder. Any other problems, you're on your own.
+*PS. Something that helped personally was `rm -rf ~/.ghc ~/.cabal and reinstall both, have fun!*
 
 ## Using the project
 
 ### Authentication
+*Some routes that perform POST, DELETE and UPDATE methods require authentication.*
+
 User: *hamza*
 Password: *abc123*
 
