@@ -1,6 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 
+{-|
+Module      : Auth
+Description : Auth module for sensitive data
+Maintainer  : al.alnaimi@gmail.com
+
+This module handles the verification of authenticating
+a user from accessing sensitive routes in the framework
+such as POST and DELETE requests.
+-}
+
 module Auth where
 
 import Db

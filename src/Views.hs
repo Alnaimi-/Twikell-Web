@@ -1,6 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 
+{-|
+Module      : Views
+Description : Renders json to the web
+Maintainer  : al.alnaimi@gmail.com
+
+This module handles the rendering of
+haskell type data and encodes it into
+JSON format for display to the end user
+either as response to a cURL request or 
+browser request.
+-}
+
 module Views where
 
 import JSON
@@ -22,8 +34,8 @@ listedTweets (Just tweets) = json tweets
 
 -- | Takes a Maybe Tweet. And renders it to JSON
 viewTweet :: Maybe Tweet -> ActionM ()
-viewTweet Nothing = json (TL.pack "Error retreiving tweets. Is the Tweet ID correct?") -- ^ Case of nothing, return error
-viewTweet (Just tweet) = json tweet -- ^ Otherwise return the tweet
+viewTweet Nothing = json (TL.pack "Error retreiving tweets. Is the Tweet ID correct?") -- Case of nothing, return error
+viewTweet (Just tweet) = json tweet -- Otherwise return the tweet
 
 -- | Takes a Maybe list of tweets and renders all of them
 insertedTweets :: Maybe [Tweet] -> ActionM ()
@@ -31,8 +43,8 @@ insertedTweets tweets = json tweets
 
 -- | Displays message for deleting a tweet.
 deletedTweet :: Maybe Integer -> ActionM ()
-deletedTweet Nothing = json (TL.pack "Error deleting tweet. Is the tweet ID correct?") -- ^ Tweet was not deleted sucessfully.
-deletedTweet _ = json (TL.pack "Deleted tweet") -- ^ Display message informing the request holder
+deletedTweet Nothing = json (TL.pack "Error deleting tweet. Is the tweet ID correct?") -- Tweet was not deleted sucessfully.
+deletedTweet _ = json (TL.pack "Deleted tweet") -- Display message informing the request holder
 
 {- Following is concerned with displaying the User -}
 

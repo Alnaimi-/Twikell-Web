@@ -1,5 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+{-|
+Module      : Main
+Description : Main entry for the framework
+Maintainer  : al.alnaimi@gmail.com
+Stability   : experimental
+Portability : POSIX
+
+This module handles HTTP request using the 
+Wai server framework and Scotty for routing.
+-}
+
 module Main where
 
 import Auth
@@ -44,7 +55,8 @@ protectedResources request = do
   where protect (p : _) =  p == "admin"  -- all requests to /admin/* should be authenticated
         protect _       =  False         -- other requests are allowed for anonymous users
 
-
+-- | The main entry to configure database
+--   port and routing
 main :: IO ()
 main = do
   loadedConf <- C.load [C.Required "application.conf"]
@@ -124,7 +136,7 @@ main = do
           query <- param "name" :: ActionM TL.Text                  -- get the param name representing search query
           users <- liftIO $ searchUsers $ TL.unpack query           -- send a GET request to the Twitter API
           listedUsers users                                         -- List all users matching query
-                                                                    -- ^ PS this doesn't add resulted users to DB
+                                                                    -- PS this doesn't add resulted users to DB
 
 ----------------------------------------------
 

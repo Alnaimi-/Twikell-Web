@@ -1,7 +1,19 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 
+{-|
+Module      : DB
+Description : Querying/modifying the database
+Maintainer  : al.alnaimi@gmail.com
+
+This module handles requests; fetch or execution
+of queries; to the database. Such as inserting
+new tweets from Twitter into the local database.
+All statements are prepared to prevent SQL injection.
+-}
+
 module Db where
+
 import JSON
 import Web.Scotty.Internal.Types (ActionT)
 import GHC.Generics (Generic)
@@ -20,15 +32,16 @@ import qualified Data.Text.Lazy.Encoding as TL
 import qualified Data.Text as T
 import GHC.Int
 
--- DbConfig contains info needed to connect to MySQL server
+-- | DbConfig contains info needed to connect to MySQL such
+--   as user, password, etc.
 data DbConfig = DbConfig {
   dbName     :: String,
   dbUser     :: String,
   dbPassword :: String
 } deriving (Show, Generic)
 
--- The function knows how to create new DB connection
--- It is needed to use with resource pool
+-- | Creates a Databse connection through
+--   the configuration file applicaiton.conf
 newConn :: DbConfig -> IO Connection
 newConn conf = connect defaultConnectInfo { 
   connectUser     = dbUser conf,
@@ -81,9 +94,9 @@ listTweets pool name = do
   -- Map the parseTweet function on the result of fetch
   return $ isEmpty $ map parseTweet res
 
-  where getTags tags = map (\tag -> Tag tag) $ TL.splitOn (TL.pack ",") tags            -- ^ Splits the tags saved as X,Y,Z 
+  where getTags tags = map (\tag -> Tag tag) $ TL.splitOn (TL.pack ",") tags            -- Splits the tags saved as X,Y,Z 
         parseTweet (tweetId, text, reCount, tags, user, scrn, name, img, loc, flwrC) =  --   and reconstruct into Tag type
-          Tweet tweetId text reCount (getTags tags) (User scrn name img loc flwrC)      -- ^ Reconstruct a tweet from the fetchedresults.
+          Tweet tweetId text reCount (getTags tags) (User scrn name img loc flwrC)      -- Reconstruct a tweet from the fetchedresults.
         isEmpty [] = Nothing
         isEmpty xs = Just $ xs  
 
@@ -97,10 +110,10 @@ findTweet pool id = do
 
   return $ oneTweet res
 
-  where getTags tags = map (\tag -> Tag tag) $ TL.splitOn (TL.pack ",") tags                           -- Same as tags above
-        oneTweet ((tweetId, text, reCount, tags, user, scrn, name, img, loc, flwrC) : _) =         -- ^ Here we only reconstruct the first tweet as 
+  where getTags tags = map (\tag -> Tag tag) $ TL.splitOn (TL.pack ",") tags                       -- Same as tags above
+        oneTweet ((tweetId, text, reCount, tags, user, scrn, name, img, loc, flwrC) : _) =         -- Here we only reconstruct the first tweet as 
                   Just $ Tweet tweetId text reCount (getTags tags) (User scrn name img loc flwrC)  --   there shouldn't be more with same unique id
-        oneTweet _ = Nothing                                                                           -- If tweet not fond return Nothing
+        oneTweet _ = Nothing                                                                       -- If tweet not fond return Nothing
 
 -- | Insert list of tweets into database based on returned tweets from
 --   Querying the REST API of twitter
@@ -116,7 +129,7 @@ insertTweets pool (Just tweets) = do       -- If tweets were returned by the RES
 insertTweet :: Pool Connection -> Tweet -> ActionT TL.Text IO ()
 insertTweet pool tweet = do
   let tweetId' = TL.pack $ show $ tweetId tweet  -- From Integer to TL.Text
-  let reCount' = TL.pack $ show $ reCount tweet  -- ^
+  let reCount' = TL.pack $ show $ reCount tweet  -- From Integer to TL.Text
   let hashtags' = compactForm $ hashtags tweet   -- Intercalate a tweet from [Tag x, Tag y] --> x,y
   let user' = user tweet                         -- get user object
   let scrn' = screenName user'                   -- get the screen_name

@@ -1,6 +1,16 @@
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 
+{-|
+Module      : JSON
+Description : Aeson decode/encode instances
+Maintainer  : al.alnaimi@gmail.com
+
+This module contains all affiliated JSON
+instances and there syntax for enconding
+or decoding handled by the Aeson library
+-}
+
 module JSON where
 
 import Control.Applicative
@@ -25,8 +35,8 @@ instance FromJSON Tweet where
     Tweet <$> v .: "id"
           <*> v .: "text"
           <*> v .: "retweet_count"
-          <*> ((v .: "entities") >>= (.: "hashtags")) -- ^ Parsing hashtag is given by entities.
-          <*> v .: "user"                             --   Each tag is then extracted acc to Tag.
+          <*> ((v .: "entities") >>= (.: "hashtags")) --  Parsing hashtag is given by entities.
+          <*> v .: "user"                             --  Each tag is then extracted acc to Tag.
 
 -- | Specify the parsing of Tweet object to JSON
 instance ToJSON Tweet where

@@ -1,5 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+{-|
+Module      : RESTApi
+Description : Requests to the Twitter API
+Maintainer  : al.alnaimi@gmail.com
+
+This module handles HTTP requests to the
+Twitter REST Api. Requests handled uses
+a private public key registered under
+@Babadope
+-}
+
 module RESTApi (
   getTimeline,
   getUsers,
@@ -61,7 +72,7 @@ getTimeline name = do
   req <- parseUrl $ "https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=" ++ name
 
   -- Tweet object parsed by decodeRequest method.
-  decodeRequest req -- ^ passing the Request object.
+  decodeRequest req -- passing the Request object.
 
 -- | This function retrieves information about users
 --   We only interested in one, but twitter only offers [Users]
