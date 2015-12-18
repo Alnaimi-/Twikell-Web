@@ -40,7 +40,7 @@ Any cabal problems; you're on your own.
 
 *PS. Something that helped personally was:* `rm -rf ~/.ghc ~/.cabal` *and reinstall both. All jokes aside though... dont. Have fun!*
 
-## Using the project
+## Using the framework
 
 CD into the source folder, run GHCI and load the main:
 
@@ -51,6 +51,8 @@ CD into the source folder, run GHCI and load the main:
 
 Or compile and run from the main folder.
 
+**For accessing the remote EC2 server, replace all occurences of localhost with 54.194.118.199. Remember to first run the server remotely by following the steps depicted under *Configuring the project remotely*.**
+
 ### Authentication
 
 *Some routes that perform POST, DELETE and UPDATE methods require authentication.*
@@ -59,8 +61,6 @@ User: *hamza*
 Password: *abc123*
 
 ### Tweets
-
-**For accessing the remote EC2 server, replace all occurences of localhost with 54.194.118.199. Remember first run the server remotely, following above steps to first ssh and then loading main.**
 
 **To view all tweets in the DB try:**
 - `http://localhost:3000/tweet`
