@@ -11,15 +11,14 @@ To ssh to the EC2 server you must first download the *twikell-public.pem* key pa
 
 Technologies used:
 
-* `Scotty` for routing
-* `Configurator` for configuration
 * `Aeson` for JSON encoding/decoding
-* `MySQL` server
-* `mysql` and `mysql-simple` for communication with DB
+* `Configurator` for configuration
+* `mysql` and `mysql-simple` for DB access
+* `OAuth` client for Twitter authentication
 * `resource-pool` for DB connections pool
+* `Scotty` for routing
 * `wai-extra` for basic authentication
 * `Warp` as webserver
-* `OAuth` client for Twitter authentication
 
 ## Configuring the project
 
