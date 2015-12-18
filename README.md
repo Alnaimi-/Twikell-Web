@@ -2,11 +2,14 @@
 
 This is a Haskell API running on the Scotty web framework. The API runs on localhost:3000 and provides for basic HTTP requests to retrieve & add users/tweets. This data is retrieved and parsed from the public Twitter API.
 
-The framework is currently hosted and running on Amazon's EC2 server. To connect to the public server use:
-First download the *twikell-public.pem* key pair for authentication.
+The framework is currently hosted and running on Amazon's EC2 server.
+
+To ssh to the EC2 server you must first download the *twikell-public.pem* key pair for authentication.
+
 CD into the folder where above key resides and run in terminal:
-`chmod 600 twikell-public.pem`
-`ssh -v -i twikell-public.pem ubuntu@ec2-54-194-118-199.eu-west-1.compute.amazonaws.com`
+
+  `chmod 600 twikell-public.pem`
+  `ssh -v -i twikell-public.pem ubuntu@ec2-54-194-118-199.eu-west-1.compute.amazonaws.com`
 
 Technologies used:
 
@@ -26,13 +29,13 @@ Make sure that both the haskell-framework and cabal is set up
 before proceeding.
 
 1. First you need to install both MySQL-Client and MySQL-Server
-   `sudo apt-get install mysql-client mysql-server`
+  `sudo apt-get install mysql-client mysql-server`
 
 2. Make sure that libpcre is isntalled
-   `sudo apt-get install libpcre3 libpcre3-dev`
+  `sudo apt-get install libpcre3 libpcre3-dev`
 
 3. Setup all dependent modules and libraries
-   `cabal install --only-dependencies`
+  `cabal install --only-dependencies`
 
 4. Finally run the mysql dump to populate the database.
 
