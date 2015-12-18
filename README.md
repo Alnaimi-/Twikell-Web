@@ -25,6 +25,12 @@ To ssh to the EC2 server you must first download the *twikell-public.pem* key pa
 2. `ssh -v -i twikell-public.pem ubuntu@ec2-54-194-118-199.eu-west-1.compute.amazonaws.com`
 3. All required modules/libraries and DB already setup. Enjoy.
 
+If you ever need to copy new files over to the EC2 server you can do so by *scp*
+
+`scp -i twikell-public.pem -r . ubuntu@ec2-54-194-118-199.eu-west-1.compute.amazonaws.com:twikell-web`
+
+Which adds the current directory recursively to the *twikell-web* folder at the remote side.
+
 ## Configuring the project locally
 
 Make sure that both the haskell-framework and cabal is set up
