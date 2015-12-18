@@ -4,11 +4,6 @@ This is a Haskell API running on the Scotty web framework. The API runs on local
 
 The framework is currently hosted and running on Amazon's EC2 server.
 
-To ssh to the EC2 server you must first download the *twikell-public.pem* key pair for authentication. Once it's downloaded CD into the folder and run in terminal:
-
-1. `chmod 600 twikell-public.pem`
-2. `ssh -v -i twikell-public.pem ubuntu@ec2-54-194-118-199.eu-west-1.compute.amazonaws.com`
-
 Technologies used:
 
 * `Aeson` for JSON encoding/decoding
@@ -20,34 +15,42 @@ Technologies used:
 * `wai-extra` for basic authentication
 * `Warp` as webserver
 
-## Configuring the project
+## Configuring the project remotely
+
+To ssh to the EC2 server you must first download the *twikell-public.pem* key pair for authentication. Once it's downloaded CD into the folder and run in terminal:
+
+1. `chmod 600 twikell-public.pem`
+2. `ssh -v -i twikell-public.pem ubuntu@ec2-54-194-118-199.eu-west-1.compute.amazonaws.com`
+
+## Configuring the project locally
 
 Make sure that both the haskell-framework and cabal is set up
 before proceeding.
 
 1. First you need to install both MySQL-Client and MySQL-Server
   `sudo apt-get install mysql-client mysql-server`
-
-2. Make sure that libpcre is isntalled
+2. Make sure that libpcre is installed
   `sudo apt-get install libpcre3 libpcre3-dev`
-
 3. Setup all dependent modules and libraries
   `cabal install --only-dependencies`
-
 4. Finally run the mysql dump to populate the database.
 
-From here you can either cd into the source folder, run GHCI and load the main
-- `:l Main.hs`
-- `main`
-- or compile and run from main folder. 
+Any cabal problems; you're on your own.
 
-Any other problems, you're on your own.
-
-*PS. Something that helped personally was:* `rm -rf ~/.ghc ~/.cabal` *and reinstall both, have fun!*
+*PS. Something that helped personally was:* `rm -rf ~/.ghc ~/.cabal` *and reinstall both. All jokes aside though... dont. Have fun!*
 
 ## Using the project
 
+CD into the source folder, run GHCI and load the main
+1. `cd /path-to-twikell-web/src
+2. `ghci`
+3. `:l Main.hs` 
+4. `main`
+
+Or compile and run from the main folder.
+
 ### Authentication
+
 *Some routes that perform POST, DELETE and UPDATE methods require authentication.*
 
 User: *hamza*
