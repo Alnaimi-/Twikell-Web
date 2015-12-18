@@ -3,6 +3,7 @@
 
 module JSON where
 
+import Control.Applicative
 import Data.Aeson
 import GHC.Generics
 import qualified Data.Text.Lazy as TL

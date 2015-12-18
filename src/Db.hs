@@ -3,9 +3,10 @@
 
 module Db where
 import JSON
-
 import Web.Scotty.Internal.Types (ActionT)
 import GHC.Generics (Generic)
+import qualified Control.Exception as E
+import Control.Monad 
 import Control.Monad.IO.Class
 import Data.Maybe
 import qualified Database.MySQL.Base as M
@@ -76,9 +77,9 @@ listTweets pool name = do
            -- Preform an inner join on the two tables; returning associated user for each tweet.
            "SELECT * FROM tweet INNER JOIN twitter_user ON tweet.name=twitter_user.screen_name WHERE screen_name LIKE ? ORDER BY id DESC"
            :: IO [(Integer, TL.Text, Integer, TL.Text, TL.Text, TL.Text, TL.Text, TL.Text, TL.Text, Integer)]
-  
+
   -- Map the parseTweet function on the result of fetch
-  return $ isEmpty $ map parseTweet res 
+  return $ isEmpty $ map parseTweet res
 
   where getTags tags = map (\tag -> Tag tag) $ TL.splitOn (TL.pack ",") tags            -- ^ Splits the tags saved as X,Y,Z 
         parseTweet (tweetId, text, reCount, tags, user, scrn, name, img, loc, flwrC) =  --   and reconstruct into Tag type
@@ -117,12 +118,21 @@ insertTweet pool tweet = do
   let tweetId' = TL.pack $ show $ tweetId tweet  -- From Integer to TL.Text
   let reCount' = TL.pack $ show $ reCount tweet  -- ^
   let hashtags' = compactForm $ hashtags tweet   -- Intercalate a tweet from [Tag x, Tag y] --> x,y
-  let user' = screenName (user tweet)            -- get screen_name as is
+  let user' = user tweet                         -- get user object
+  let scrn' = screenName user'                   -- get the screen_name
 
-  liftIO $ execSqlT pool [tweetId', text tweet, reCount', hashtags', user']
-             "INSERT IGNORE INTO tweet(id, tweet, reCount, hashtags, name) VALUES(?,?,?,?,?)"
+  -- Insert user unless already exist
+  insertUser pool user'
+
+  -- Prepare statement & insert the individual tweet to the DB, ON Duplicate, do something meaningless
+  -- Alternative is INSERT IGNORE; which ignores ALL errors!
+  liftIO $ execSqlT pool [tweetId', text tweet, reCount', hashtags', scrn']
+             "INSERT INTO tweet(id, tweet, reCount, hashtags, name) VALUES(?,?,?,?,?) ON DUPLICATE KEY UPDATE id=id"
+
   return ()
   where compactForm a = TL.intercalate ("," :: TL.Text) $ map (\(Tag h) -> h) $ a
+        exists (x:_) = True
+        exists _     = False
 
 -- | Delete a tweet in the database based on id
 deleteTweet :: Pool Connection -> TL.Text -> IO (Maybe Integer)
@@ -169,9 +179,9 @@ insertUser pool user = do
   let loc'   = location user
   let flwrC' = TL.pack $ show $ followerCount user
   
-  -- Prepare and set statement according to variables above
+  -- Again if user already exists, then do something meaningless.
   liftIO $ execSqlT pool [scrn', name', img', loc', flwrC']
-             "INSERT IGNORE INTO twitter_user(screen_name, name, image, location, followers) VALUES(?,?,?,?,?)"
+             "INSERT INTO twitter_user(screen_name, name, image, location, followers) VALUES(?,?,?,?,?) ON DUPLICATE KEY UPDATE name=name"
   -- Rewrap into Just user to display
   return ()
 

@@ -9,6 +9,7 @@ module RESTApi (
 import Exceptions
 import JSON
 
+import Control.Applicative
 import Data.ByteString (ByteString)
 import qualified Control.Exception as E
 import Data.Maybe
@@ -46,7 +47,6 @@ decodeRequest req = do
   case res of 
     Nothing   -> return Nothing
     otherwise -> return $ decode $ responseBody $ fromJust res
-
 
 -------------------------- Twitter API Querying Methods --------------------------
 ----------------------------------------------------------------------------------
