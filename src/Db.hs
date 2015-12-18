@@ -71,7 +71,7 @@ execSqlT pool args sql = withResource pool ins
 
 --------------------------------------------------------------------------------
 
--- | Returns the encrypted password for a user from the DB
+-- | Returns the encrypted password for a user from the DB, if user is found
 findUserByLogin :: Pool Connection -> String -> IO (Maybe String)
 findUserByLogin pool login = do
   res <- liftIO $ fetchT pool (Only login) "SELECT * FROM user WHERE login=?" :: IO [(Integer, String, String)]
@@ -83,7 +83,7 @@ findUserByLogin pool login = do
 
 {- Following methods are concerned with the tweet table -}
 
--- | Lists all tweets matching a certain query
+-- | Lists all tweets matching a certain screen_name, based on SQL LIKE; %% for all tweets
 listTweets :: Pool Connection -> TL.Text -> IO (Maybe [Tweet])
 listTweets pool name = do
   res <- fetchT pool (Only name)
@@ -125,7 +125,7 @@ insertTweets pool (Just tweets) = do       -- If tweets were returned by the RES
   a <- mapM_ (insertTweet pool) tweets
   return ()
 
--- | Insert a tweet into the database
+-- | Insert a single tweet into the database
 insertTweet :: Pool Connection -> Tweet -> ActionT TL.Text IO ()
 insertTweet pool tweet = do
   let tweetId' = TL.pack $ show $ tweetId tweet  -- From Integer to TL.Text
@@ -144,8 +144,6 @@ insertTweet pool tweet = do
 
   return ()
   where compactForm a = TL.intercalate ("," :: TL.Text) $ map (\(Tag h) -> h) $ a
-        exists (x:_) = True
-        exists _     = False
 
 -- | Delete a tweet in the database based on id
 deleteTweet :: Pool Connection -> TL.Text -> IO (Maybe Integer)
@@ -158,7 +156,7 @@ deleteTweet pool id = do
 
 {- Following methods are concerned with the user table -}
 
--- | Lists all users matching a certain query
+-- | Lists all users matching a certain screen_name, based on SQL LIKE; %% for all tweets
 listUsers :: Pool Connection -> TL.Text -> IO (Maybe [User])
 listUsers pool name = do
   res <- fetchT pool (Only name)
@@ -183,7 +181,7 @@ insertUsers pool (Just users) = do
   a <- mapM_ (insertUser pool) users
   return ()
 
--- | Insert a user into the database
+-- | Insert a single user into the database
 insertUser :: Pool Connection -> User -> ActionT TL.Text IO ()
 insertUser pool user = do     
   let scrn'  = screenName user         
@@ -199,8 +197,10 @@ insertUser pool user = do
   return ()
 
 -- | Update a user based on unique screen_name
-updateUser :: Pool Connection -> Maybe User -> ActionT TL.Text IO ()
-updateUser pool Nothing = return ()
+updateUser :: Pool Connection 
+           -> Maybe User -- ^ Was the JSON body in correct form?
+           -> ActionT TL.Text IO ()
+updateUser pool Nothing = return () -- If the JSON was incorrect, then do nothing
 updateUser pool (Just (User scrn name img loc flwrC)) = do
   -- Prepare statement and set each value of user
   liftIO $ execSqlT pool [name, img, loc, (TL.pack $ show flwrC), scrn] -- Last bit is from Integer -> TL.Text

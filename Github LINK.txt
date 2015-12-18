@@ -1,0 +1,3 @@
+The project source code can be found at github. Paulo should have access to the repository. Highly recommend to read and browse the code over there instead. The framework is also up and running on amazon server accessible at 54.194.118.199:3000/
+
+https://github.com/Alnaimi-/Twikell-Web

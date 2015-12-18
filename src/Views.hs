@@ -37,10 +37,6 @@ viewTweet :: Maybe Tweet -> ActionM ()
 viewTweet Nothing = json (TL.pack "Error retreiving tweets. Is the Tweet ID correct?") -- Case of nothing, return error
 viewTweet (Just tweet) = json tweet -- Otherwise return the tweet
 
--- | Takes a Maybe list of tweets and renders all of them
-insertedTweets :: Maybe [Tweet] -> ActionM ()
-insertedTweets tweets = json tweets
-
 -- | Displays message for deleting a tweet.
 deletedTweet :: Maybe Integer -> ActionM ()
 deletedTweet Nothing = json (TL.pack "Error deleting tweet. Is the tweet ID correct?") -- Tweet was not deleted sucessfully.

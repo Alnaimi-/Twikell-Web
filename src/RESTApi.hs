@@ -65,7 +65,7 @@ decodeRequest req = do
 -- | This function retrieves the timeline of a certain user
 getTimeline :: String -- ^ Screen name of the user
          -> IO (Maybe [Tweet]) -- ^ If there's an error, parsing the JSON then
-                               --   return Left with the String, Else [Tweet] obj.
+                               --   return Nothing, Else Just [Tweet]
 getTimeline name = do
   -- Firstly, we create a HTTP request with method GET.
   -- This particular request searches for a screen name, and retreives their timeline.
@@ -77,7 +77,7 @@ getTimeline name = do
 -- | This function retrieves information about users
 --   We only interested in one, but twitter only offers [Users]
 getUsers :: String -- ^ Screen name of the user
-        -> IO (Maybe [User])
+        -> IO (Maybe [User]) -- ^ Just like timeline, this time we return [User]
 getUsers name = do
   -- Create a HTTP request with GET; here we are retrieved a specific registered user
   req <- parseUrl $ "https://api.twitter.com/1.1/users/lookup.json?screen_name=" ++ name
@@ -86,7 +86,7 @@ getUsers name = do
 
 -- | This function takes a search query and returns all Users matching query.
 searchUsers :: String -- ^ Search query for user
-           -> IO (Maybe [User]) -- ^ Just like timeline, this time we return [User]
+           -> IO (Maybe [User]) 
 searchUsers query = do 
   -- Create a HTTP request with GET; in this scenario we are searching registered users 
   -- max count is 20 / page

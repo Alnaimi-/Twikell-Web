@@ -94,9 +94,9 @@ main = do
         -- CREATE
         post   "/admin/tweet/:name" $ do 
           name <- param "name" :: ActionM TL.Text                   -- read the screen_name
-          tweets <- liftIO $ getTimeline $ TL.unpack name           -- Retrieve tweets for said screen name
+          tweets <- liftIO $ getTimeline $ TL.unpack name           -- Retrieve tweets for said screen name from Twitter
           insertTweets pool tweets                                  -- insert parsed tweets into the DB
-          insertedTweets tweets                                     -- Echo the tweets retrieved from Twitter
+          listedTweets tweets                                       -- Echo the tweets retrieved from Twitter, using same view
         
         -- DELETE
         -- Using param passing here instead just to demonstrate
