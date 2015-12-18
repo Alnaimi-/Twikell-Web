@@ -19,7 +19,7 @@ Technologies used:
 
 ## Configuring the project remotely
 
-To ssh to the EC2 server you must first download the *twikell-public.pem* key pair for authentication. Once it's downloaded CD into the folder and run in terminal:
+To ssh to the EC2 server you must first download the *twikell-public.pem* key pair for authentication. Once it's downloaded CD into the folder and run in terminal. You only need to do this if you wish to browse the files or change something on the remote server:
 
 1. `chmod 600 twikell-public.pem`
 2. `ssh -v -i twikell-public.pem ubuntu@ec2-54-194-118-199.eu-west-1.compute.amazonaws.com`
@@ -59,7 +59,7 @@ CD into the source folder, run GHCI and load the main:
 
 Or compile and run from the main folder.
 
-**For accessing the remote EC2 server, replace all occurences of localhost with 54.194.118.199. Remember to first run the server remotely by following the steps depicted under *Configuring the project remotely*.**
+**For accessing the remote EC2 server, replace all occurences of localhost with 54.194.118.199. If the server is not already running (it should be) then remember to ssh and run it following same steps above.**
 
 ### Authentication
 
