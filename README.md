@@ -21,6 +21,7 @@ To ssh to the EC2 server you must first download the *twikell-public.pem* key pa
 
 1. `chmod 600 twikell-public.pem`
 2. `ssh -v -i twikell-public.pem ubuntu@ec2-54-194-118-199.eu-west-1.compute.amazonaws.com`
+3. All required modules/libraries and DB already setup. Enjoy.
 
 ## Configuring the project locally
 
