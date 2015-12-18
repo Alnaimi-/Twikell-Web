@@ -19,7 +19,7 @@ Technologies used:
 
 ## Configuring the project remotely
 
-To ssh to the EC2 server you must first download the *twikell-public.pem* key pair for authentication. Once it's downloaded CD into the folder and run in terminal. You only need to do this if you wish to browse the files or change something on the remote server:
+To ssh to the EC2 server you must first download the *twikell-public.pem* key pair for authentication. Once it's downloaded CD into the folder and run in terminal. You only need to do this if you wish to browse the files or change something on the remote server, as it should already be up and running:
 
 1. `chmod 600 twikell-public.pem`
 2. `ssh -v -i twikell-public.pem ubuntu@ec2-54-194-118-199.eu-west-1.compute.amazonaws.com`
