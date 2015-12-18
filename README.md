@@ -73,6 +73,7 @@ Password: *abc123*
 **To populate the DB with tweets from a certain user:**
 - `curl -u hamza:abc123 -X POST http://localhost:3000/admin/tweet/X`
   - *Where X is the screen_name of a Twitter user. I.e. katyperry.*
+  - *This also adds a user to the DB in case he doesn't exist.*
 
 **To delete certain tweets from the DB try:**
 - `curl -u hamza:abc123 -X DELETE -d 'id=X' http://localhost:3000/admin/tweet`
